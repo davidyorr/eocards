@@ -1,6 +1,7 @@
 import HomeScreen from "./features/home/HomeScreen.vue";
 import LoginScreen from "./features/login/LoginScreen.vue";
 import { createRouter, createWebHashHistory } from "vue-router";
+import { supabase } from "./utils/supabase";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -21,8 +22,10 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to) => {
-  const isAuthenticated = false;
+router.beforeEach(async (to) => {
+  const user = await supabase.auth.getUser();
+  console.log("user", user);
+  const isAuthenticated = user.data.user !== null;
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return {
