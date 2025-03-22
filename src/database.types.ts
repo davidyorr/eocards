@@ -110,18 +110,21 @@ export type Database = {
       deck_attribute_type: {
         Row: {
           attribute_name: string
+          attribute_type: Database["public"]["Enums"]["attribute_type"]
           deck_id: number
           display_order: number
           id: number
         }
         Insert: {
           attribute_name: string
+          attribute_type?: Database["public"]["Enums"]["attribute_type"]
           deck_id: number
           display_order: number
           id?: number
         }
         Update: {
           attribute_name?: string
+          attribute_type?: Database["public"]["Enums"]["attribute_type"]
           deck_id?: number
           display_order?: number
           id?: number
@@ -144,7 +147,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      attribute_type: "text" | "image"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -2,6 +2,9 @@
 import { Database } from "@/database.types";
 import { supabase } from "../../utils/supabase";
 import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const newDeckName = ref("");
 const createNewDeckVisibility = ref(false);
@@ -49,6 +52,11 @@ async function handleCreateDeckClick() {
     fetchDecks();
   }
 }
+
+async function handleDeckClick(deckId: number) {
+  console.log("click", deckId);
+  router.push(`/deck/${deckId}`);
+}
 </script>
 
 <template>
@@ -60,7 +68,11 @@ async function handleCreateDeckClick() {
       <button @click="handleCreateDeckClick">Create Deck</button>
     </div>
     <div>
-      <div v-for="deck in decks" :key="deck.id">
+      <div
+        v-for="deck in decks"
+        :key="deck.id"
+        @click="handleDeckClick(deck.id)"
+      >
         {{ deck.name }}
       </div>
     </div>

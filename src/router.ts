@@ -2,6 +2,7 @@ import HomeScreen from "./features/home/HomeScreen.vue";
 import LoginScreen from "./features/login/LoginScreen.vue";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { supabase } from "./utils/supabase";
+import DeckViewerScreen from "./features/deck-viewer/DeckViewerScreen.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -18,6 +19,11 @@ const router = createRouter({
       path: "/login",
       name: "Login",
       component: LoginScreen,
+    },
+    {
+      path: "/deck/:id",
+      name: "Deck",
+      component: DeckViewerScreen,
     },
   ],
 });
