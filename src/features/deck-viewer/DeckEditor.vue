@@ -5,6 +5,7 @@ import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
+const deckId = Number.parseInt(String(route.params.id));
 
 type AttributeType = Database["public"]["Enums"]["attribute_type"];
 
@@ -17,13 +18,25 @@ const deckAttributes = ref<
   Array<Database["public"]["Tables"]["deck_attribute_type"]["Row"]>
 >([]);
 
+type NewCard = {
+  id?: number;
+  deck_id: number;
+  front_content: string;
+};
+const fetchedCards = ref<Array<Database["public"]["Tables"]["card"]["Row"]>>(
+  []
+);
+const editedCards = ref<
+  Array<Database["public"]["Tables"]["card"]["Row"] | NewCard>
+>([]);
+
 onMounted(() => {
   fetchAttributeTypes();
+  fetchCards();
 });
 
 async function fetchAttributeTypes() {
   console.log("fetching attribute types");
-  const deckId = Number.parseInt(String(route.params.id));
   if (Number.isNaN(deckId)) {
     return;
   }
@@ -42,6 +55,64 @@ async function fetchAttributeTypes() {
     deckAttributes.value = data;
   } catch (error) {
     console.error("Error fetching attribute types:", error);
+  }
+}
+
+async function fetchCards() {
+  console.log("fetching cards");
+  if (Number.isNaN(deckId)) {
+    return;
+  }
+  try {
+    const { data, error } = await supabase
+      .from("card")
+      .select()
+      .eq("deck_id", deckId);
+
+    if (error) {
+      console.error("Error fetching cards:", error);
+      return;
+    }
+    console.log("fetched cards", data);
+
+    fetchedCards.value = data;
+    editedCards.value = data;
+  } catch (error) {
+    console.error("Error fetching cards:", error);
+  }
+}
+
+async function saveCards() {
+  console.log("saving cards");
+  if (Number.isNaN(deckId)) {
+    return;
+  }
+  try {
+    // remove the id field from cards that haven't been saved to the database
+    // they are the cards that have negative ids
+    const cardsToSave = editedCards.value.map((card) => {
+      if (card.id === undefined) {
+        throw Error(`card missing id ${card.front_content}`);
+      }
+      if (card.id < 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...cardWithoutId } = card;
+        return cardWithoutId;
+      }
+
+      return card;
+    });
+    const { data, error } = await supabase.from("card").upsert(cardsToSave, {
+      defaultToNull: false,
+    });
+
+    console.log("saved cards", data);
+
+    if (error) {
+      console.error("Error saving cards:", error);
+    }
+  } catch (error) {
+    console.error("Error saving cards:", error);
   }
 }
 
@@ -64,6 +135,23 @@ async function handleAddAttributeClick() {
   newAttributeName.value = "";
   newAttributeType.value = "text";
   fetchAttributeTypes();
+}
+
+function handleNewCardClick() {
+  // use negative numbers to differentiate from cards that have been saved.
+  // those cards will have a generated id which will be positive
+  const id = -performance.now();
+  console.log("new card", id);
+
+  editedCards.value.push({
+    id: id,
+    deck_id: deckId,
+    front_content: "",
+  });
+}
+
+function handleSaveClick() {
+  saveCards();
 }
 </script>
 
@@ -88,6 +176,25 @@ async function handleAddAttributeClick() {
       {{ deckAttribute.attribute_name }} - {{ deckAttribute.attribute_type }}
     </div>
   </div>
+  <h2>Cards</h2>
+  <button @click="handleSaveClick">Save Cards</button>
+  <div class="cards">
+    <div v-for="card in editedCards" :key="card.id" class="card">
+      <textarea class="front-content" v-model="card.front_content"></textarea>
+    </div>
+    <button @click="handleNewCardClick">New Card</button>
+  </div>
 </template>
 
-<style></style>
+<style scoped>
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-gap: 1rem;
+  grid-auto-flow: dense;
+
+  .card {
+    border: 1px solid blue;
+  }
+}
+</style>
