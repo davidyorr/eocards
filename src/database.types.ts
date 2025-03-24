@@ -13,6 +13,7 @@ export type Database = {
 				Row: {
 					created_at: string;
 					deck_id: number;
+					display_order: number;
 					front_content: string;
 					id: number;
 					notes: string | null;
@@ -21,6 +22,7 @@ export type Database = {
 				Insert: {
 					created_at?: string;
 					deck_id: number;
+					display_order: number;
 					front_content: string;
 					id?: number;
 					notes?: string | null;
@@ -29,6 +31,7 @@ export type Database = {
 				Update: {
 					created_at?: string;
 					deck_id?: number;
+					display_order?: number;
 					front_content?: string;
 					id?: number;
 					notes?: string | null;
