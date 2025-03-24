@@ -24,7 +24,8 @@ async function fetchCards() {
 		const { data, error } = await supabase
 			.from("card")
 			.select()
-			.eq("deck_id", deckId);
+			.eq("deck_id", deckId)
+			.order("display_order");
 
 		if (error) {
 			console.error("Error fetching cards:", error);

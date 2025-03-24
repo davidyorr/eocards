@@ -22,6 +22,7 @@ type NewCard = {
 	id?: number;
 	deck_id: number;
 	front_content: string;
+	display_order: number;
 };
 const fetchedCards = ref<Array<Database["public"]["Tables"]["card"]["Row"]>>(
 	[],
@@ -67,7 +68,8 @@ async function fetchCards() {
 		const { data, error } = await supabase
 			.from("card")
 			.select()
-			.eq("deck_id", deckId);
+			.eq("deck_id", deckId)
+			.order("display_order");
 
 		if (error) {
 			console.error("Error fetching cards:", error);
@@ -147,6 +149,7 @@ function handleNewCardClick() {
 		id: id,
 		deck_id: deckId,
 		front_content: "",
+		display_order: editedCards.value.length,
 	});
 }
 
