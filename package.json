@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-cli-service build",
+    "format": "prettier --write '{**/*,*}.{ts,vue,css}'",
     "lint": "npx eslint src"
   },
   "dependencies": {
