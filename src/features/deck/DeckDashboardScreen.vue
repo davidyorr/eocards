@@ -15,7 +15,6 @@ function handleEditButtonClick() {
 
 <template>
 	<h1>Deck Dashboard Screen</h1>
-	<main>{{ $route.params.id }}</main>
 	<button @click="handleReviewButtonClick">Review</button>
 	<button @click="handleEditButtonClick">Edit</button>
 </template>

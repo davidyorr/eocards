@@ -3,6 +3,7 @@ import { Database } from "@/database.types";
 import { supabase } from "../../utils/supabase";
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import { useCards } from "./useCards";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -18,40 +19,10 @@ const deckAttributes = ref<
 	Array<Database["public"]["Tables"]["deck_attribute_type"]["Row"]>
 >([]);
 
-// type NewCard = {
-// 	id: number;
-// 	deck_id: number;
-// 	front_content: string;
-// 	display_order: number;
-// 	card_attribute_value: {
-// 		id: number;
-// 		card_id: number;
-// 		deck_attribute_type_id: number;
-// 		value: string;
-// 	}[];
-// };
-type NewCard = Pick<
-	Database["public"]["Tables"]["card"]["Row"],
-	"id" | "deck_id" | "front_content" | "display_order"
-> & {
-	card_attribute_value: Array<
-		Pick<
-			Database["public"]["Tables"]["card_attribute_value"]["Row"],
-			"id" | "card_id" | "deck_attribute_type_id" | "value"
-		>
-	>;
-};
-type CardWithAttributes = Database["public"]["Tables"]["card"]["Row"] & {
-	card_attribute_value: Array<
-		Database["public"]["Tables"]["card_attribute_value"]["Row"]
-	>;
-};
-const fetchedCards = ref<Array<CardWithAttributes>>([]);
-const editedCards = ref<Array<CardWithAttributes | NewCard>>([]);
+const { cards: editedCards } = useCards(deckId);
 
 onMounted(() => {
 	fetchAttributeTypes();
-	fetchCards();
 });
 
 async function fetchAttributeTypes() {
@@ -77,41 +48,6 @@ async function fetchAttributeTypes() {
 	}
 }
 
-async function fetchCards() {
-	console.log("fetching cards");
-	if (Number.isNaN(deckId)) {
-		return;
-	}
-	try {
-		const { data, error } = await supabase
-			.from("card")
-			.select(
-				`
-				*,
-				card_attribute_value (
-					*,
-					deck_attribute_type (
-						attribute_name
-					)
-				)
-			`,
-			)
-			.eq("deck_id", deckId)
-			.order("display_order");
-
-		if (error) {
-			console.error("Error fetching cards:", error);
-			return;
-		}
-		console.log("fetched cards", data);
-
-		fetchedCards.value = data;
-		editedCards.value = data;
-	} catch (error) {
-		console.error("Error fetching cards:", error);
-	}
-}
-
 async function saveCards() {
 	console.log("saving cards");
 	if (Number.isNaN(deckId)) {
@@ -125,12 +61,21 @@ async function saveCards() {
 				throw Error(`card missing id ${card.front_content}`);
 			}
 			if (card.id < 0) {
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				const { id, ...cardWithoutId } = card;
+				/* eslint-disable @typescript-eslint/no-unused-vars */
+				const {
+					id,
+					created_at,
+					updated_at,
+					card_attribute_value,
+					...cardWithoutId
+				} = card;
 				return cardWithoutId;
 			}
 
-			return card;
+			const { card_attribute_value, ...cardWithoutAttributes } = card;
+			/* eslint-enable @typescript-eslint/no-unused-vars */
+
+			return cardWithoutAttributes;
 		});
 		const { data, error } = await supabase.from("card").upsert(cardsToSave, {
 			defaultToNull: false,
@@ -173,15 +118,16 @@ function handleNewCardClick() {
 	const id = -performance.now();
 	console.log("new card", id);
 
-	// const cardAttributeValue: NewCard["card_attribute_value"] = [];
-
-	// editedCards.value.push({
-	// 	id: id,
-	// 	deck_id: deckId,
-	// 	front_content: "",
-	// 	display_order: editedCards.value.length,
-	// 	// card_attribute_value: [],
-	// });
+	editedCards.value.push({
+		id: id,
+		created_at: "",
+		notes: "",
+		updated_at: "",
+		deck_id: deckId,
+		front_content: "",
+		display_order: editedCards.value.length,
+		card_attribute_value: [],
+	});
 }
 
 function handleSaveClick() {

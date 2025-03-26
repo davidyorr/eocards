@@ -1,43 +1,12 @@
 <script setup lang="ts">
-import { Database } from "@/database.types";
-import { supabase } from "@/utils/supabase";
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 import { useRoute } from "vue-router";
+import { useCards } from "./useCards";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
-
-const cards = ref<Array<Database["public"]["Tables"]["card"]["Row"]>>([]);
-
+const { cards } = useCards(deckId);
 const currentCardIndex = ref(0);
-
-onMounted(() => {
-	fetchCards();
-});
-
-async function fetchCards() {
-	console.log("fetching cards");
-	if (Number.isNaN(deckId)) {
-		return;
-	}
-	try {
-		const { data, error } = await supabase
-			.from("card")
-			.select()
-			.eq("deck_id", deckId)
-			.order("display_order");
-
-		if (error) {
-			console.error("Error fetching cards:", error);
-			return;
-		}
-		console.log("fetched cards", data);
-
-		cards.value = data;
-	} catch (error) {
-		console.error("Error fetching cards:", error);
-	}
-}
 
 function handlePreviousClick() {
 	if (currentCardIndex.value === 0) {
