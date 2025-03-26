@@ -2,7 +2,9 @@ import HomeScreen from "./features/home/HomeScreen.vue";
 import LoginScreen from "./features/login/LoginScreen.vue";
 import { createRouter, createWebHashHistory } from "vue-router";
 import { supabase } from "./utils/supabase";
-import DeckViewerScreen from "./features/deck-viewer/DeckViewerScreen.vue";
+import DeckDashboardScreen from "./features/deck/DeckDashboardScreen.vue";
+import DeckReviewer from "./features/deck/DeckReviewer.vue";
+import DeckEditor from "./features/deck/DeckEditor.vue";
 
 const router = createRouter({
 	history: createWebHashHistory(),
@@ -22,8 +24,18 @@ const router = createRouter({
 		},
 		{
 			path: "/deck/:id",
-			name: "Deck",
-			component: DeckViewerScreen,
+			name: "Deck Dashboard",
+			component: DeckDashboardScreen,
+		},
+		{
+			path: "/deck/review/:id",
+			name: "Deck Reviewer",
+			component: DeckReviewer,
+		},
+		{
+			path: "/deck/edit/:id",
+			name: "Deck Editor",
+			component: DeckEditor,
 		},
 	],
 });

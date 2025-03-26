@@ -18,18 +18,36 @@ const deckAttributes = ref<
 	Array<Database["public"]["Tables"]["deck_attribute_type"]["Row"]>
 >([]);
 
-type NewCard = {
-	id?: number;
-	deck_id: number;
-	front_content: string;
-	display_order: number;
+// type NewCard = {
+// 	id: number;
+// 	deck_id: number;
+// 	front_content: string;
+// 	display_order: number;
+// 	card_attribute_value: {
+// 		id: number;
+// 		card_id: number;
+// 		deck_attribute_type_id: number;
+// 		value: string;
+// 	}[];
+// };
+type NewCard = Pick<
+	Database["public"]["Tables"]["card"]["Row"],
+	"id" | "deck_id" | "front_content" | "display_order"
+> & {
+	card_attribute_value: Array<
+		Pick<
+			Database["public"]["Tables"]["card_attribute_value"]["Row"],
+			"id" | "card_id" | "deck_attribute_type_id" | "value"
+		>
+	>;
 };
-const fetchedCards = ref<Array<Database["public"]["Tables"]["card"]["Row"]>>(
-	[],
-);
-const editedCards = ref<
-	Array<Database["public"]["Tables"]["card"]["Row"] | NewCard>
->([]);
+type CardWithAttributes = Database["public"]["Tables"]["card"]["Row"] & {
+	card_attribute_value: Array<
+		Database["public"]["Tables"]["card_attribute_value"]["Row"]
+	>;
+};
+const fetchedCards = ref<Array<CardWithAttributes>>([]);
+const editedCards = ref<Array<CardWithAttributes | NewCard>>([]);
 
 onMounted(() => {
 	fetchAttributeTypes();
@@ -67,7 +85,17 @@ async function fetchCards() {
 	try {
 		const { data, error } = await supabase
 			.from("card")
-			.select()
+			.select(
+				`
+				*,
+				card_attribute_value (
+					*,
+					deck_attribute_type (
+						attribute_name
+					)
+				)
+			`,
+			)
 			.eq("deck_id", deckId)
 			.order("display_order");
 
@@ -145,12 +173,15 @@ function handleNewCardClick() {
 	const id = -performance.now();
 	console.log("new card", id);
 
-	editedCards.value.push({
-		id: id,
-		deck_id: deckId,
-		front_content: "",
-		display_order: editedCards.value.length,
-	});
+	// const cardAttributeValue: NewCard["card_attribute_value"] = [];
+
+	// editedCards.value.push({
+	// 	id: id,
+	// 	deck_id: deckId,
+	// 	front_content: "",
+	// 	display_order: editedCards.value.length,
+	// 	// card_attribute_value: [],
+	// });
 }
 
 function handleSaveClick() {
@@ -183,7 +214,16 @@ function handleSaveClick() {
 	<button @click="handleSaveClick">Save Cards</button>
 	<div class="cards">
 		<div v-for="card in editedCards" :key="card.id" class="card">
+			<label>Front</label>
 			<textarea class="front-content" v-model="card.front_content"></textarea>
+			<template
+				v-for="attribute in card.card_attribute_value"
+				:key="attribute.id"
+			>
+				<label>{{ attribute.id }}</label>
+				<textarea v-model="attribute.value"></textarea>
+			</template>
+			<!-- loop through editedCards.cardAttributeValue -->
 		</div>
 		<button @click="handleNewCardClick">New Card</button>
 	</div>
