@@ -14,9 +14,30 @@ function handleEditButtonClick() {
 </script>
 
 <template>
-	<h1>Deck Dashboard Screen</h1>
-	<button @click="handleReviewButtonClick">Review</button>
-	<button @click="handleEditButtonClick">Edit</button>
+	<main>
+		<h1>Deck Dashboard Screen</h1>
+		<button @click="handleReviewButtonClick">Review</button>
+		<button @click="handleEditButtonClick">Edit</button>
+	</main>
 </template>
 
-<style scoped></style>
+<style scoped>
+main {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	width: 100%;
+	gap: 1rem;
+
+	button {
+		width: 256px;
+		font-size: 1.25rem;
+		line-height: 3rem;
+		background-color: rgb(43, 86, 175);
+		color: white;
+		cursor: pointer;
+	}
+}
+</style>
