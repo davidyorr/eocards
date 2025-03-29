@@ -23,13 +23,17 @@ function handleNextClick() {
 		currentCardIndex.value = currentCardIndex.value + 1;
 	}
 }
+
+function handleCardClick() {
+	console.log("asdf");
+}
 </script>
 
 <template>
 	<h1>Deck Reviewer</h1>
 	<div class="cards" v-if="cards.length > 0">
 		<button @click="handlePreviousClick">prev</button>
-		<article class="card-content">
+		<article class="card-content" @click="handleCardClick">
 			{{ cards[currentCardIndex].front_content }}
 		</article>
 		<button @click="handleNextClick">next</button>
@@ -39,9 +43,14 @@ function handleNextClick() {
 
 <style scoped>
 .cards {
+	height: 100%;
+
 	.card-content {
-		border: 1px solid blue;
-		height: 200px;
+		background-color: var(--card-background-color);
+		box-shadow: rgba(100, 100, 111, 0.2) 0px 0px 30px 0px;
+		height: 80%;
+		font-size: 3rem;
+		align-content: center;
 	}
 }
 </style>

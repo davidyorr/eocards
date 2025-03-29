@@ -193,14 +193,21 @@ function handleSaveClick() {
 		<button @click="handleSaveClick">Save Cards</button>
 		<div class="cards">
 			<div v-for="card in editedCards" :key="card.id" class="card">
-				<label>Front</label>
-				<textarea class="front-content" v-model="card.front_content"></textarea>
+				<div class="input-container">
+					<label>Front</label>
+					<textarea
+						class="front-content"
+						v-model="card.front_content"
+					></textarea>
+				</div>
 				<template
 					v-for="attribute in card.card_attribute_value"
 					:key="attribute?.id"
 				>
-					<label>{{ attribute?.deck_attribute_type.attribute_name }}</label>
-					<textarea v-model="attribute.value"></textarea>
+					<div class="input-container">
+						<label>{{ attribute?.deck_attribute_type.attribute_name }}</label>
+						<textarea v-model="attribute.value"></textarea>
+					</div>
 				</template>
 			</div>
 			<button @click="handleNewCardClick">New Card</button>
@@ -210,21 +217,49 @@ function handleSaveClick() {
 
 <style scoped>
 main {
-	max-width: 800px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	margin: 0 auto;
-	gap: 1rem;
+	gap: 16px;
 
 	.cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		grid-gap: 1rem;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		grid-gap: 16px;
 		grid-auto-flow: dense;
 
 		.card {
-			border: 1px solid blue;
+			background-color: var(--card-background-color);
+			border-radius: 12px;
+			box-shadow: rgba(100, 100, 111, 0.2) 0px 0px 6px 0px;
+			padding: 12px;
+
+			.input-container {
+				display: flex;
+				flex-direction: column;
+			}
+
+			.input-container:not(:last-child) {
+				/* display: grid;
+				grid-template-columns: minmax(0, 1fr) auto;
+				align-items: center; */
+				margin-bottom: 8px;
+			}
+
+			label {
+				display: inline-block;
+				align-self: center;
+			}
+
+			textarea {
+				margin-left: 4px;
+				resize: none;
+			}
+
+			textarea:not(:last-child) {
+				/* margin-bottom: 8px; */
+			}
 		}
 	}
 
