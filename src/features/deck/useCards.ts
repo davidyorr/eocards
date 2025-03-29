@@ -11,6 +11,7 @@ export function useCards(deckId: number) {
 			return [];
 		}
 		try {
+			loading.value = true;
 			const { data: attributeTypes, error: attributeTypesError } =
 				await supabase
 					.from("deck_attribute_type")
@@ -22,7 +23,6 @@ export function useCards(deckId: number) {
 				return [];
 			}
 
-			loading.value = true;
 			const { data, error } = await supabase
 				.from("card")
 				.select(

@@ -2,11 +2,14 @@
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
+import { useDeck } from "./useDeck";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
+const { deck } = useDeck(deckId);
 const { cards } = useCards(deckId);
 const currentCardIndex = ref(0);
+const viewingFront = ref(true);
 
 function handlePreviousClick() {
 	if (currentCardIndex.value === 0) {
@@ -25,16 +28,20 @@ function handleNextClick() {
 }
 
 function handleCardClick() {
-	console.log("asdf");
+	viewingFront.value = !viewingFront.value;
 }
 </script>
 
 <template>
-	<h1>Deck Reviewer</h1>
+	<h1>Deck Reviewer {{ deck?.name }}</h1>
 	<div class="cards" v-if="cards.length > 0">
 		<button @click="handlePreviousClick">prev</button>
 		<article class="card-content" @click="handleCardClick">
-			{{ cards[currentCardIndex].front_content }}
+			{{
+				viewingFront
+					? cards[currentCardIndex].front_content
+					: cards[currentCardIndex].card_attribute_value[0].value
+			}}
 		</article>
 		<button @click="handleNextClick">next</button>
 	</div>

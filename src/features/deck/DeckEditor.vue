@@ -4,6 +4,7 @@ import { supabase } from "../../utils/supabase";
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
+import { useDeck } from "./useDeck";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -19,6 +20,7 @@ const deckAttributes = ref<
 	Array<Database["public"]["Tables"]["deck_attribute_type"]["Row"]>
 >([]);
 
+const { deck } = useDeck(deckId);
 const { cards: editedCards } = useCards(deckId);
 
 onMounted(() => {
@@ -170,7 +172,7 @@ function handleSaveClick() {
 
 <template>
 	<main>
-		<h1>Deck Editor</h1>
+		<h1>Deck Editor {{ deck?.name }}</h1>
 		<h2>Attributes</h2>
 		<div>
 			<input v-model="newAttributeName" placeholder="name" />
@@ -255,10 +257,6 @@ main {
 			textarea {
 				margin-left: 4px;
 				resize: none;
-			}
-
-			textarea:not(:last-child) {
-				/* margin-bottom: 8px; */
 			}
 		}
 	}
