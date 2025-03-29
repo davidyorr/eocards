@@ -2,16 +2,16 @@
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
-import { useDeck } from "./useDeck";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
-const { deck } = useDeck(deckId);
 const { cards } = useCards(deckId);
 const currentCardIndex = ref(0);
 const viewingFront = ref(true);
 
 function handlePreviousClick() {
+	viewingFront.value = true;
+
 	if (currentCardIndex.value === 0) {
 		currentCardIndex.value = cards.value.length - 1;
 	} else {
@@ -20,6 +20,8 @@ function handlePreviousClick() {
 }
 
 function handleNextClick() {
+	viewingFront.value = true;
+
 	if (currentCardIndex.value === cards.value.length - 1) {
 		currentCardIndex.value = 0;
 	} else {
@@ -27,37 +29,54 @@ function handleNextClick() {
 	}
 }
 
-function handleCardClick() {
+function handleFlipClick() {
 	viewingFront.value = !viewingFront.value;
 }
 </script>
 
 <template>
-	<h1>Deck Reviewer {{ deck?.name }}</h1>
 	<div class="cards" v-if="cards.length > 0">
-		<button @click="handlePreviousClick">prev</button>
-		<article class="card-content" @click="handleCardClick">
+		<article class="card-content">
+			<div class="controls">
+				<div class="prev-button" @click="handlePreviousClick"></div>
+				<div class="flip-button" @click="handleFlipClick"></div>
+				<div class="next-button" @click="handleNextClick"></div>
+			</div>
 			{{
 				viewingFront
 					? cards[currentCardIndex].front_content
 					: cards[currentCardIndex].card_attribute_value[0].value
 			}}
 		</article>
-		<button @click="handleNextClick">next</button>
 	</div>
 	<h2 v-else>no cards</h2>
 </template>
 
 <style scoped>
 .cards {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 	height: 100%;
 
 	.card-content {
+		position: relative;
 		background-color: var(--card-background-color);
 		box-shadow: rgba(100, 100, 111, 0.2) 0px 0px 30px 0px;
 		height: 80%;
 		font-size: 3rem;
 		align-content: center;
+
+		.controls {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+
+			display: grid;
+			grid-template-columns: 25% 50% 25%;
+		}
 	}
 }
 </style>
