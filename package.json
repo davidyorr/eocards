@@ -7,7 +7,10 @@
 		"build": "vue-cli-service build",
 		"format": "prettier --write '{**/*,*}.{ts,vue,css}'",
 		"lint": "npx eslint src",
-		"update-supabase-types": "echo 'PROJECT_ID:' && read PROJECT_ID && echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase gen types typescript --project-id $PROJECT_ID --schema public > src/database.types.ts && prettier --write src/database.types.ts"
+		"update-supabase-types": "echo 'PROJECT_ID:' && read PROJECT_ID && echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase gen types typescript --project-id $PROJECT_ID --schema public > src/database.types.ts && prettier --write src/database.types.ts",
+		"supabase:link": "echo 'PROJECT_ID:' && read PROJECT_ID && echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase link --project-ref $PROJECT_ID",
+		"supabase:db-pull": "echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase db pull",
+		"supabase:migration-up": "echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase migration up"
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "2.49.1",
