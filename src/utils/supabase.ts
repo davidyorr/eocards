@@ -1,10 +1,17 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/database.types";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+// we need to handle both node and vite (playwright testing vs running the app)
+const env = typeof process !== "undefined" ? process.env : import.meta.env;
 
-export const supabase = createClient<Database>(
-	supabaseUrl ?? "",
-	supabaseKey ?? "",
-);
+const supabaseUrl = env.VITE_SUPABASE_URL;
+const supabaseKey = env.VITE_SUPABASE_KEY;
+
+export const supabase = createClient<Database>(supabaseUrl!, supabaseKey!);
+
+export function getSupabaseAdmin() {
+	return createClient(
+		env.VITE_SUPABASE_URL!,
+		env.VITE_SUPABASE_SERVICE_ROLE_KEY!,
+	);
+}

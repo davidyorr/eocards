@@ -1,12 +1,14 @@
 {
 	"name": "eocards",
 	"version": "0.1.0",
+	"type": "module",
 	"private": true,
 	"scripts": {
 		"dev": "vite",
 		"build": "vue-cli-service build",
 		"format": "prettier --write '{**/*,*}.{ts,vue,css}'",
 		"lint": "npx eslint src",
+		"test": "NODE_ENV=test npx playwright test",
 		"update-supabase-types": "echo 'PROJECT_ID:' && read PROJECT_ID && echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase gen types typescript --project-id $PROJECT_ID --schema public > src/database.types.ts && prettier --write src/database.types.ts",
 		"supabase:link": "echo 'PROJECT_ID:' && read PROJECT_ID && echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase link --project-ref $PROJECT_ID",
 		"supabase:db-pull": "echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase db pull",
@@ -19,12 +21,14 @@
 		"vue-router": "4.5.0"
 	},
 	"devDependencies": {
+		"@playwright/test": "1.51.1",
 		"@typescript-eslint/eslint-plugin": "8.27.0",
 		"@typescript-eslint/parser": "8.27.0",
 		"@vitejs/plugin-vue": "5.2.3",
 		"@vue/cli-plugin-pwa": "5.0.8",
 		"@vue/cli-plugin-typescript": "5.0.8",
 		"@vue/eslint-config-typescript": "14.5.0",
+		"dotenv": "16.4.7",
 		"eslint": "9.22.0",
 		"eslint-config-prettier": "10.1.1",
 		"eslint-plugin-prettier": "5.2.3",

@@ -42,8 +42,8 @@ async function handleLogoutButtonClick() {
 			placeholder="password"
 			type="password"
 		/>
-		<button @click="handleLoginButtonClick">Login</button>
-		<button @click="handleLogoutButtonClick">Logout</button>
+		<button @click="handleLoginButtonClick">Log In</button>
+		<button @click="handleLogoutButtonClick">Log Out</button>
 		<p id="error-message">{{ errorMessage }}</p>
 	</main>
 </template>
