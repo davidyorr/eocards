@@ -2,7 +2,6 @@
 import { useRouter } from "vue-router";
 import { supabase } from "../../utils/supabase";
 import { ref } from "vue";
-import { userStore } from "@/stores/userStore";
 
 const router = useRouter();
 
@@ -26,12 +25,6 @@ async function handleLoginButtonClick() {
 		errorMessage.value = response.error.message;
 	}
 }
-
-async function handleLogoutButtonClick() {
-	const response = await supabase.auth.signOut();
-	userStore.reset();
-	console.log(response);
-}
 </script>
 
 <template>
@@ -45,7 +38,6 @@ async function handleLogoutButtonClick() {
 			type="password"
 		/>
 		<button @click="handleLoginButtonClick">Log In</button>
-		<button @click="handleLogoutButtonClick">Log Out</button>
 		<p id="error-message">{{ errorMessage }}</p>
 	</main>
 </template>

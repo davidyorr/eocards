@@ -54,7 +54,6 @@ export default defineConfig({
 			name: "chromium",
 			use: {
 				...devices["Desktop Chrome"],
-				storageState: "playwright/.auth/user.json",
 				viewport: {
 					width: 1920,
 					height: 1080,

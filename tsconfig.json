@@ -14,12 +14,13 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "vite/client"
+      "vite/client",
+      "unplugin-icons/types/vue"
     ],
     "paths": {
       "@/*": [
-        "src/*"
-      ]
+        "src/*",
+      ],
     },
     "lib": [
       "esnext",
