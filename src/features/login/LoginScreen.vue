@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { supabase } from "../../utils/supabase";
 import { ref } from "vue";
+import { userStore } from "@/stores/userStore";
 
 const router = useRouter();
 
@@ -28,6 +29,7 @@ async function handleLoginButtonClick() {
 
 async function handleLogoutButtonClick() {
 	const response = await supabase.auth.signOut();
+	userStore.reset();
 	console.log(response);
 }
 </script>

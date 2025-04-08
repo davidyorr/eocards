@@ -5,6 +5,7 @@ import { supabase } from "./utils/supabase";
 import DeckDashboardScreen from "./features/deck/DeckDashboardScreen.vue";
 import DeckReviewer from "./features/deck/DeckReviewer.vue";
 import DeckEditor from "./features/deck/DeckEditor.vue";
+import { userStore } from "./stores/userStore";
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -26,16 +27,25 @@ const router = createRouter({
 			path: "/deck/:id",
 			name: "Deck Dashboard",
 			component: DeckDashboardScreen,
+			meta: {
+				requiresAuth: true,
+			},
 		},
 		{
 			path: "/deck/review/:id",
 			name: "Deck Reviewer",
 			component: DeckReviewer,
+			meta: {
+				requiresAuth: true,
+			},
 		},
 		{
 			path: "/deck/edit/:id",
 			name: "Deck Editor",
 			component: DeckEditor,
+			meta: {
+				requiresAuth: true,
+			},
 		},
 	],
 });
@@ -44,6 +54,7 @@ router.beforeEach(async (to) => {
 	const user = await supabase.auth.getUser();
 	console.log("user", user);
 	const isAuthenticated = user.data.user !== null;
+	userStore.user = user.data.user;
 
 	if (to.meta.requiresAuth && !isAuthenticated) {
 		return {
