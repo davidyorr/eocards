@@ -10,7 +10,7 @@ const supabaseKey = env.VITE_SUPABASE_KEY;
 export const supabase = createClient<Database>(supabaseUrl!, supabaseKey!);
 
 export function getSupabaseAdmin() {
-	return createClient(
+	return createClient<Database>(
 		env.VITE_SUPABASE_URL!,
 		env.VITE_SUPABASE_SERVICE_ROLE_KEY!,
 	);

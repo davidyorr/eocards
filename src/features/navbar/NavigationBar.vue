@@ -36,7 +36,7 @@ async function handleLogoutClick() {
 	</nav>
 </template>
 
-<style>
+<style scoped>
 nav {
 	&& {
 		display: flex;

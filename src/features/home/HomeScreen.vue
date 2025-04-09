@@ -41,15 +41,19 @@ async function handleCreateDeckClick() {
 	}
 	const userId = (await supabase.auth.getUser()).data.user?.id;
 	if (userId) {
-		const response = await supabase.from("deck").insert({
-			name: newDeckName.value,
-			user_id: userId,
-		});
+		const response = await supabase
+			.from("deck")
+			.insert({
+				name: newDeckName.value,
+				user_id: userId,
+			})
+			.select();
 		// response.status === 201
 		console.log(response);
 
 		createNewDeckVisibility.value = false;
 		fetchDecks();
+		router.push(`/deck/edit/${response.data?.[0].id}`);
 	}
 }
 
@@ -60,8 +64,7 @@ async function handleDeckClick(deckId: number) {
 </script>
 
 <template>
-	<h1>Home</h1>
-	<main>
+	<div class="content">
 		<button @click="handleNewDeckClick">New Deck</button>
 		<div v-show="createNewDeckVisibility">
 			<input placeholder="name" v-model="newDeckName" />
@@ -76,7 +79,11 @@ async function handleDeckClick(deckId: number) {
 				{{ deck.name }}
 			</div>
 		</div>
-	</main>
+	</div>
 </template>
 
-<style></style>
+<style scoped>
+.content {
+	padding: 12px 0;
+}
+</style>

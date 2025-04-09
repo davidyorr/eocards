@@ -48,6 +48,36 @@ export const test = base.extend<{
 
 				for (const user of createdUsers) {
 					try {
+						// delete decks
+						const deletedDecks = await supabaseAdmin
+							.from("deck")
+							.delete()
+							.eq("user_id", user.id)
+							.select();
+						console.log("deleted decks", deletedDecks);
+						deletedDecks.data?.forEach(async (deck) => {
+							// delete deck attribute types
+							await supabaseAdmin
+								.from("deck_attribute_type")
+								.delete()
+								.eq("deck_id", deck.id);
+
+							// delete cards
+							const deletedCards = await supabaseAdmin
+								.from("card")
+								.delete()
+								.eq("deck_id", deck.id)
+								.select();
+
+							// delete card attributes values
+							deletedCards.data?.forEach(async (card) => {
+								await supabaseAdmin
+									.from("card_attribute_value")
+									.delete()
+									.eq("card_id", card.id);
+							});
+						});
+						// delete user
 						await supabaseAdmin.auth.admin.deleteUser(user.id);
 					} catch (error) {
 						console.error(`Failed to delete user ${user.id}:`, error);

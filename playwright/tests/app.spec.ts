@@ -9,5 +9,10 @@ test("something", async ({ createUser, page }) => {
 	await page.getByRole("button", { name: "Log In" }).click();
 
 	await page.waitForURL("http://localhost:8080/");
-	await expect(page.getByRole("button", { name: "New Deck" })).toBeVisible();
+	await page.getByRole("button", { name: "New Deck" }).click();
+	await page.getByPlaceholder("name").fill("Chrono Trigger");
+	await page.getByRole("button", { name: "Create Deck" }).click();
+
+	await page.waitForURL(/http:\/\/localhost:8080\/deck\/edit\/[0-9]+/);
+	await expect(page.getByText("Deck Editor Chrono Trigger")).toBeVisible();
 });

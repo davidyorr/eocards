@@ -4,17 +4,17 @@ import NavigationBar from "./features/navbar/NavigationBar.vue";
 
 <template>
 	<NavigationBar />
-	<main class="content">
+	<main>
 		<router-view></router-view>
 	</main>
 </template>
 
-<style>
+<style scoped>
 #app {
 	height: 100vh;
 	height: 100dvh;
 
-	.content {
+	main {
 		max-width: 1280px;
 		margin: 0 auto;
 		padding: 0 24px;
