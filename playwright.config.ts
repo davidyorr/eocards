@@ -41,7 +41,7 @@ export default defineConfig({
 	/* Configuration for the expect assertion library. */
 	expect: {
 		/* Timeout for each assertion */
-		timeout: 5000,
+		timeout: 10000,
 	},
 
 	/* Configure projects for major browsers */

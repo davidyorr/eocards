@@ -24,8 +24,8 @@ async function handleLogoutClick() {
 
 <template>
 	<nav>
-		<div class="user-options-container">
-			<UserIcon @click="handleUserIconClick" v-if="userStore.user !== null" />
+		<div v-if="userStore.user !== null" class="user-options-container">
+			<UserIcon @click="handleUserIconClick" />
 			<div v-if="userOptionsVisibility" class="user-options">
 				<div class="logout" @click="handleLogoutClick">
 					<span>Log out</span>
