@@ -171,7 +171,7 @@ function handleSaveClick() {
 </script>
 
 <template>
-	<main>
+	<div class="content">
 		<h1>Deck Editor {{ deck?.name }}</h1>
 		<h2>Attributes</h2>
 		<div>
@@ -214,11 +214,11 @@ function handleSaveClick() {
 			</div>
 			<button @click="handleNewCardClick">New Card</button>
 		</div>
-	</main>
+	</div>
 </template>
 
 <style scoped>
-main {
+.content {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;

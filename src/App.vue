@@ -9,7 +9,7 @@ import NavigationBar from "./features/navbar/NavigationBar.vue";
 	</main>
 </template>
 
-<style scoped>
+<style>
 #app {
 	height: 100vh;
 	height: 100dvh;

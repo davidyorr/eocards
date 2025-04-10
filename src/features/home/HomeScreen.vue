@@ -65,8 +65,7 @@ async function handleConfirmClick() {
 }
 
 async function handleDeckClick(deckId: number) {
-	console.log("click", deckId);
-	router.push(`/deck/${deckId}`);
+	router.push(`/deck/review/${deckId}`);
 }
 </script>
 

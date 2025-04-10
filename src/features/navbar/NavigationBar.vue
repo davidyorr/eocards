@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { userStore } from "@/stores/userStore";
+import HomeIcon from "~icons/qlementine-icons/home-16";
 import UserIcon from "~icons/qlementine-icons/user-16";
+import EditIcon from "~icons/qlementine-icons/pen-16";
+import ReviewIcon from "~icons/qlementine-icons/preview-16";
 import LogOutIcon from "~icons/hugeicons/logout-01";
 import { ref } from "vue";
 import { supabase } from "@/utils/supabase";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const userOptionsVisibility = ref(false);
+
+const route = useRoute();
 const router = useRouter();
+
+function handleHomeIconClick() {
+	router.push("/");
+}
 
 function handleUserIconClick() {
 	userOptionsVisibility.value = !userOptionsVisibility.value;
@@ -20,10 +29,27 @@ async function handleLogoutClick() {
 	userOptionsVisibility.value = false;
 	router.push("/login");
 }
+
+function handleEditIconClick() {
+	router.push(`/deck/edit/${route.params.id}`);
+}
+
+function handleReviewIconClick() {
+	router.push(`/deck/review/${route.params.id}`);
+}
 </script>
 
 <template>
 	<nav>
+		<HomeIcon @click="handleHomeIconClick" />
+		<EditIcon
+			v-if="$route.path.includes('/deck/review')"
+			@click="handleEditIconClick"
+		/>
+		<ReviewIcon
+			v-if="$route.path.includes('/deck/edit')"
+			@click="handleReviewIconClick"
+		/>
 		<div v-if="userStore.user !== null" class="user-options-container">
 			<UserIcon @click="handleUserIconClick" />
 			<div v-if="userOptionsVisibility" class="user-options">
@@ -40,6 +66,7 @@ async function handleLogoutClick() {
 nav {
 	&& {
 		display: flex;
+		gap: 8px;
 	}
 	position: sticky;
 	top: 0;
