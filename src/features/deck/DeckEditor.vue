@@ -55,16 +55,22 @@ async function saveCards() {
 	if (Number.isNaN(deckId)) {
 		return;
 	}
-	const attributes: (typeof editedCards.value)[number]["card_attribute_value"] =
-		[];
+
 	try {
-		// remove the id field from cards that haven't been saved to the database
-		// they are the cards that have negative ids
+		type CardAttributeValue =
+			(typeof editedCards.value)[number]["card_attribute_value"][number];
+		// keep track of temporary IDs and their associated attributes
+		const tempIdToAttributesMap = new Map<number, Array<CardAttributeValue>>();
 		const cardsToSave = editedCards.value.map((card) => {
 			if (card.id === undefined) {
 				throw Error(`card missing id ${card.front_content}`);
 			}
+
+			// for new cards (negative IDs), store attributes with their temp ID
 			if (card.id < 0) {
+				// Remember the temp ID and its attributes
+				tempIdToAttributesMap.set(card.id, card.card_attribute_value);
+
 				/* eslint-disable @typescript-eslint/no-unused-vars */
 				const {
 					id,
@@ -76,50 +82,108 @@ async function saveCards() {
 				return cardWithoutId;
 			}
 
+			// for existing cards, collect attributes normally
 			const { card_attribute_value, ...cardWithoutAttributes } = card;
 			/* eslint-enable @typescript-eslint/no-unused-vars */
 
-			card_attribute_value.forEach((value) => {
-				attributes.push({ ...value });
-			});
-
 			return cardWithoutAttributes;
 		});
+
 		console.log("saving cards", cardsToSave);
-		const { data, error } = await supabase.from("card").upsert(cardsToSave, {
-			defaultToNull: false,
-		});
 
-		const attributesToSave = attributes.map((attribute) => {
-			if (attribute.id === undefined) {
-				throw Error(`attribute missing id ${attribute}`);
-			}
-			if (attribute.id < 0) {
-				/* eslint-disable @typescript-eslint/no-unused-vars */
-				const { id, created_at, deck_attribute_type, ...attributeWithoutId } =
-					attribute;
-				return attributeWithoutId;
-			}
-			const { deck_attribute_type, ...attributeWithoutDeckAttribute } =
-				attribute;
-			/* eslint-enable @typescript-eslint/no-unused-vars */
-
-			return attributeWithoutDeckAttribute;
-		});
-
-		console.log("saved cards", data);
-
-		console.log("saving attributes", attributesToSave);
-
-		const { data: attributeSaveData, error: attributeSaveError } =
-			await supabase.from("card_attribute_value").upsert(attributesToSave, {
+		// Save the cards first
+		const { data: savedCards, error } = await supabase
+			.from("card")
+			.upsert(cardsToSave, {
 				defaultToNull: false,
-			});
-		console.log("attribute save data", attributeSaveData);
-		console.log("attribute save error", attributeSaveError);
+			})
+			.select();
 
 		if (error) {
 			console.error("Error saving cards:", error);
+			return;
+		}
+
+		console.log("saved cards", savedCards);
+
+		// prepare the attributes with the correct card IDs
+		const attributesToSave: Array<
+			Omit<CardAttributeValue, "id" | "created_at" | "deck_attribute_type">
+		> = [];
+
+		// first handle attributes for existing cards
+		editedCards.value.forEach((card) => {
+			if (card.id >= 0 && card.card_attribute_value) {
+				card.card_attribute_value.forEach((attribute) => {
+					if (attribute.id === undefined) {
+						throw Error(`attribute missing id ${attribute}`);
+					}
+
+					if (attribute.id < 0) {
+						/* eslint-disable @typescript-eslint/no-unused-vars */
+						const {
+							id,
+							created_at,
+							deck_attribute_type,
+							...attributeWithoutId
+						} = attribute;
+						attributesToSave.push(attributeWithoutId);
+					} else {
+						const { deck_attribute_type, ...attributeWithoutDeckAttribute } =
+							attribute;
+						/* eslint-enable @typescript-eslint/no-unused-vars */
+						attributesToSave.push(attributeWithoutDeckAttribute);
+					}
+				});
+			}
+		});
+
+		// then handle attributes for newly created cards
+		if (savedCards) {
+			// map the original cards to the saved cards to find corresponding IDs
+			editedCards.value.forEach((originalCard, index) => {
+				if (originalCard.id < 0) {
+					// get the equivalent card that was saved
+					const savedCard = savedCards[index];
+
+					if (savedCard && tempIdToAttributesMap.has(originalCard.id)) {
+						const attributesForThisCard = tempIdToAttributesMap.get(
+							originalCard.id,
+						);
+
+						attributesForThisCard?.forEach((attribute) => {
+							/* eslint-disable @typescript-eslint/no-unused-vars */
+							const {
+								id,
+								created_at,
+								deck_attribute_type,
+								...attributeWithoutId
+							} = attribute;
+							/* eslint-enable @typescript-eslint/no-unused-vars */
+
+							// use the card_id from the saved card version of the card
+							attributesToSave.push({
+								...attributeWithoutId,
+								card_id: savedCard.id,
+							});
+						});
+					}
+				}
+			});
+		}
+
+		console.log("saving attributes", attributesToSave);
+
+		if (attributesToSave.length > 0) {
+			const { data: attributeSaveData, error: attributeSaveError } =
+				await supabase.from("card_attribute_value").upsert(attributesToSave, {
+					defaultToNull: false,
+				});
+			console.log("attribute save data", attributeSaveData);
+
+			if (attributeSaveError) {
+				console.error("Error saving attributes:", attributeSaveError);
+			}
 		}
 	} catch (error) {
 		console.error("Error saving cards:", error);
@@ -147,21 +211,38 @@ async function handleAddAttributeClick() {
 	fetchAttributeTypes();
 }
 
+let negativeId = -1;
+
 function handleNewCardClick() {
 	// use negative numbers to differentiate from cards that have been saved.
 	// those cards will have a generated id which will be positive
-	const id = -performance.now();
-	console.log("new card", id);
+	const cardId = -performance.now();
+	console.log("new card", cardId);
+
+	const cardAttributeValues = deckAttributes.value.map<
+		(typeof editedCards.value)[number]["card_attribute_value"][number]
+	>((attributeType) => {
+		return {
+			id: negativeId--,
+			card_id: cardId,
+			value: "",
+			created_at: "",
+			deck_attribute_type_id: attributeType.id,
+			deck_attribute_type: {
+				attribute_name: attributeType.attribute_name,
+			},
+		};
+	});
 
 	editedCards.value.push({
-		id: id,
+		id: cardId,
 		created_at: "",
 		notes: "",
 		updated_at: "",
 		deck_id: deckId,
 		front_content: "",
 		display_order: editedCards.value.length,
-		card_attribute_value: [],
+		card_attribute_value: cardAttributeValues,
 	});
 }
 
