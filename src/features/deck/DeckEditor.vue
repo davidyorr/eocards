@@ -5,6 +5,7 @@ import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
 import { useDeck } from "./useDeck";
+import { notificationsStore } from "@/stores/notificationsStore";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -185,6 +186,11 @@ async function saveCards() {
 				console.error("Error saving attributes:", attributeSaveError);
 			}
 		}
+
+		notificationsStore.queueNotification({
+			message: "Saved Cards",
+			type: "SUCCESS",
+		});
 	} catch (error) {
 		console.error("Error saving cards:", error);
 	}

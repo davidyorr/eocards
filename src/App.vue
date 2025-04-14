@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import NavigationBar from "./features/navbar/NavigationBar.vue";
+import ToastNotifications from "./features/notifications/ToastNotifications.vue";
 </script>
 
 <template>
@@ -7,6 +8,7 @@ import NavigationBar from "./features/navbar/NavigationBar.vue";
 	<main>
 		<router-view></router-view>
 	</main>
+	<ToastNotifications />
 </template>
 
 <style>
