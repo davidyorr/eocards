@@ -47,8 +47,8 @@ export default defineConfig({
 	/* Configure projects for major browsers */
 	projects: [
 		{
-			name: "setup",
-			testMatch: /.*\.setup\.ts/,
+			name: "cleanup database",
+			testMatch: /global\.teardown\.ts/,
 		},
 		{
 			name: "chromium",
@@ -59,7 +59,7 @@ export default defineConfig({
 					height: 1080,
 				},
 			},
-			dependencies: ["setup"],
+			teardown: "cleanup database",
 		},
 	],
 
