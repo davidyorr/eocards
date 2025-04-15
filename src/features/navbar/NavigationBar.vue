@@ -49,6 +49,7 @@ function handleReviewIconClick() {
 		<ReviewIcon
 			v-if="$route.path.includes('/deck/edit')"
 			@click="handleReviewIconClick"
+			data-testid="review-deck"
 		/>
 		<div v-if="userStore.user !== null" class="user-options-container">
 			<UserIcon @click="handleUserIconClick" />
