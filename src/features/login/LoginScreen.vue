@@ -28,8 +28,8 @@ async function handleLoginButtonClick() {
 </script>
 
 <template>
-	<h1>Login</h1>
-	<main>
+	<div class="content">
+		<div class="logo">LOGO</div>
 		<input id="email" v-model="email" placeholder="email" />
 		<input
 			id="password"
@@ -39,11 +39,39 @@ async function handleLoginButtonClick() {
 		/>
 		<button @click="handleLoginButtonClick">Log In</button>
 		<p id="error-message">{{ errorMessage }}</p>
-	</main>
+	</div>
 </template>
 
-<style>
-#error-message {
-	color: var(--error-message-color);
+<style scoped>
+.content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin: 0 auto;
+
+	gap: 12px;
+	max-width: 512px;
+
+	.logo {
+		margin-top: 12px;
+		width: 256px;
+		height: 256px;
+		line-height: 256px;
+		border: 1px solid grey;
+	}
+
+	input {
+		width: 100%;
+	}
+
+	button {
+		width: 100%;
+		color: black;
+		background-color: #ffbf00;
+	}
+
+	#error-message {
+		color: var(--error-message-color);
+	}
 }
 </style>

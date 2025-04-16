@@ -41,7 +41,7 @@ function handleReviewIconClick() {
 
 <template>
 	<nav>
-		<HomeIcon @click="handleHomeIconClick" />
+		<HomeIcon v-if="userStore.user !== null" @click="handleHomeIconClick" />
 		<EditIcon
 			v-if="$route.path.includes('/deck/review')"
 			@click="handleEditIconClick"
