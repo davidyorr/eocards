@@ -142,6 +142,24 @@ export type Database = {
 					},
 				];
 			};
+			user: {
+				Row: {
+					id: number;
+					preferences: Json | null;
+					user_id: string | null;
+				};
+				Insert: {
+					id?: number;
+					preferences?: Json | null;
+					user_id?: string | null;
+				};
+				Update: {
+					id?: number;
+					preferences?: Json | null;
+					user_id?: string | null;
+				};
+				Relationships: [];
+			};
 		};
 		Views: {
 			[_ in never]: never;
