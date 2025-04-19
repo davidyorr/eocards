@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { userStore } from "@/stores/userStore";
+import Settings from "./Settings.vue";
 import HomeIcon from "~icons/qlementine-icons/home-16";
 import UserIcon from "~icons/qlementine-icons/user-16";
 import EditIcon from "~icons/qlementine-icons/pen-16";
 import ReviewIcon from "~icons/qlementine-icons/preview-16";
+import SettingsIcon from "~icons/qlementine-icons/settings-16";
 import LogOutIcon from "~icons/hugeicons/logout-01";
 import { ref } from "vue";
 import { supabase } from "@/utils/supabase";
 import { useRoute, useRouter } from "vue-router";
 
-const userOptionsVisibility = ref(false);
+const userOptionsMenuVisibility = ref(false);
+const userSettingsModalVisibility = ref(false);
 
 const route = useRoute();
 const router = useRouter();
@@ -19,15 +22,24 @@ function handleHomeIconClick() {
 }
 
 function handleUserIconClick() {
-	userOptionsVisibility.value = !userOptionsVisibility.value;
+	userOptionsMenuVisibility.value = !userOptionsMenuVisibility.value;
 }
 
 async function handleLogoutClick() {
 	const response = await supabase.auth.signOut();
 	console.log(response);
 	userStore.reset();
-	userOptionsVisibility.value = false;
+	userOptionsMenuVisibility.value = false;
 	router.push("/login");
+}
+
+async function handleSettingsClick() {
+	userOptionsMenuVisibility.value = false;
+	userSettingsModalVisibility.value = true;
+}
+
+async function handleSettingsClose() {
+	userSettingsModalVisibility.value = false;
 }
 
 function handleEditIconClick() {
@@ -53,13 +65,18 @@ function handleReviewIconClick() {
 		/>
 		<div v-if="userStore.user !== null" class="user-options-container">
 			<UserIcon @click="handleUserIconClick" />
-			<div v-if="userOptionsVisibility" class="user-options">
-				<div class="logout" @click="handleLogoutClick">
+			<div v-if="userOptionsMenuVisibility" class="user-options">
+				<div class="preferences row" @click="handleSettingsClick">
+					<span>Settings</span>
+					<SettingsIcon />
+				</div>
+				<div class="logout row" @click="handleLogoutClick">
 					<span>Log out</span>
 					<LogOutIcon />
 				</div>
 			</div>
 		</div>
+		<Settings v-if="userSettingsModalVisibility" @close="handleSettingsClose" />
 	</nav>
 </template>
 
@@ -91,14 +108,19 @@ nav {
 		.user-options {
 			position: absolute;
 			display: flex;
+			flex-direction: column;
 			white-space: nowrap;
 			top: 27px;
 			right: 0;
-			padding: 0 8px;
 			background-color: rgb(52, 58, 64);
 
-			.logout {
+			.row {
 				cursor: pointer;
+				display: flex;
+				justify-content: center;
+				gap: 8px;
+				padding: 4px 12px;
+				width: 100%;
 			}
 		}
 	}
