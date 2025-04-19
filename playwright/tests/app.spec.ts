@@ -10,13 +10,13 @@ test("something", async ({ createUser, page }) => {
 	await page.getByRole("button", { name: "Log In" }).click();
 
 	// create a deck
-	await page.waitForURL("http://localhost:8080/");
+	await expect(page).toHaveURL("http://localhost:8080/");
 	await page.getByRole("button", { name: "New Deck" }).click();
 	await page.getByPlaceholder("name").fill("Chrono Trigger");
 	await page.getByAltText("confirm").click();
 
 	// navigate to the edit page
-	await page.waitForURL(/http:\/\/localhost:8080\/deck\/edit\/[0-9]+/);
+	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/edit\/[0-9]+/);
 	await expect(page.getByText("Deck Editor Chrono Trigger")).toBeVisible();
 
 	// add attribute
@@ -53,7 +53,7 @@ test("something", async ({ createUser, page }) => {
 
 	// navigate to the review page
 	await page.getByTestId("review-deck").click();
-	await page.waitForURL(/http:\/\/localhost:8080\/deck\/review\/[0-9]+/);
+	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/review\/[0-9]+/);
 
 	await expect(page.locator(".card-content")).toHaveText("Crono");
 	await page.locator(".flip-button").click();
