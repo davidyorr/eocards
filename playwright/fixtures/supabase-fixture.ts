@@ -61,4 +61,12 @@ export const test = base.extend<{
 	],
 });
 
+test.afterEach(async ({ page }, testInfo) => {
+	if (testInfo.status !== testInfo.expectedStatus) {
+		const path = testInfo.outputPath("failure.png");
+		console.log("saving test failure screenshot", path);
+		await page.screenshot({ path: path });
+	}
+});
+
 export { expect } from "@playwright/test";

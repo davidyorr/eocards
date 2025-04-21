@@ -22,6 +22,9 @@ test("something", async ({ createUser, page }) => {
 	// add attribute
 	await page.getByPlaceholder("name").fill("Magical Element");
 	await page.getByRole("button", { name: "Add Attribute" }).click();
+	await expect(page.locator(".attributes-container")).toHaveText(
+		"Magical Element - text",
+	);
 
 	// add cards
 	await page.getByRole("button", { name: "New Card" }).click();

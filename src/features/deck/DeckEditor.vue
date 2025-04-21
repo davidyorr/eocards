@@ -273,7 +273,7 @@ function handleSaveClick() {
 			</select>
 			<button @click="handleAddAttributeClick">Add Attribute</button>
 		</div>
-		<div>
+		<div class="attributes-container">
 			<div v-for="deckAttribute in deckAttributes" :key="deckAttribute.id">
 				{{ deckAttribute.attribute_name }} - {{ deckAttribute.attribute_type }}
 			</div>
