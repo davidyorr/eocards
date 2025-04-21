@@ -1,4 +1,7 @@
 import { expect, test } from "playwright/fixtures/supabase-fixture";
+import { takeScreenshotOnFailure } from "./util";
+
+test.afterEach(takeScreenshotOnFailure);
 
 test("something", async ({ createUser, page }) => {
 	const user = await createUser();

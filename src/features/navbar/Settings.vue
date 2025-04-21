@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Database } from "@/database.types";
+import { notificationsStore } from "@/stores/notificationsStore";
 import { supabase } from "@/utils/supabase";
-import { onMounted, ref, useTemplateRef } from "vue";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
 
 type Settings = {
 	dark_mode: boolean;
@@ -21,7 +22,38 @@ const userPreferences = ref<
 	Database["public"]["Tables"]["user"]["Row"] | null
 >();
 
-const checkedNames = ref<Array<string>>([]);
+const checkedNames = computed({
+	// derive the initial value from the supabase response
+	get() {
+		if (!userPreferences.value?.preferences) return [];
+
+		return Object.entries(userPreferences.value.preferences)
+			.filter(([_, value]) => value)
+			.map(([name]) => name);
+	},
+
+	// update when checkboxes change
+	set(checkedNames) {
+		if (!userPreferences.value) return;
+
+		const updatedPreferences = {
+			...(userPreferences.value.preferences as Record<string, boolean>),
+		};
+
+		Object.keys(updatedPreferences).forEach((key) => {
+			updatedPreferences[key] = false;
+		});
+
+		checkedNames.forEach((name) => {
+			updatedPreferences[name] = true;
+		});
+
+		userPreferences.value = {
+			...userPreferences.value,
+			preferences: updatedPreferences,
+		};
+	},
+});
 
 function underscoreToDisplayName(str: string) {
 	return str
@@ -46,6 +78,10 @@ async function handleSaveClick() {
 			.eq("id", userPreferences.value.id)
 			.select();
 		console.log("save preferences response", response);
+		notificationsStore.queueNotification({
+			message: "User settings updated",
+			type: "SUCCESS",
+		});
 	}
 }
 
@@ -74,17 +110,12 @@ onMounted(async () => {
 			userPreferences.value = response.data;
 		}
 	}
-	checkedNames.value = Object.entries(userPreferences.value?.preferences ?? {})
-		.filter(([_, value]) => value)
-		.map(([name]) => {
-			return name;
-		});
 });
 </script>
 
 <template>
 	<div class="modal-overlay" ref="modal-overlay" @click="handleOverlayClick">
-		<div class="modal">
+		<div class="settings-modal">
 			<h1>Settings</h1>
 			<div
 				v-for="[name, value] in Object.entries(
@@ -96,9 +127,12 @@ onMounted(async () => {
 					type="checkbox"
 					:checked="value"
 					:value="name"
+					:id="`user-preference-${name}`"
 					v-model="checkedNames"
 				/>
-				<label>{{ underscoreToDisplayName(name) }}</label>
+				<label :for="`user-preference-${name}`">{{
+					underscoreToDisplayName(name)
+				}}</label>
 			</div>
 			<button @click="handleSaveClick">Save</button>
 		</div>
@@ -118,7 +152,7 @@ onMounted(async () => {
 	z-index: 1000;
 	background-color: rgba(0, 0, 0, 0.2);
 
-	.modal {
+	.settings-modal {
 		position: relative;
 		max-width: 400px;
 		width: 90%;

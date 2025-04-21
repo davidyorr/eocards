@@ -17,6 +17,9 @@ teardown("clean up database", async () => {
 
 		// delete decks
 		await supabaseAdmin.from("deck").delete().neq("id", -1);
+
+		// delete user preferences
+		await supabaseAdmin.from("user").delete().neq("id", -1);
 	} catch (error) {
 		console.error(`Failed to delete decks:`, error);
 	}
