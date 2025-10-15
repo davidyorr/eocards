@@ -123,7 +123,6 @@ async function handleDeckClick(deckId: number) {
 	.new-deck-container {
 		display: grid;
 		grid-template-columns: 138px auto;
-		height: 36px;
 
 		.cancel {
 			background-color: rgb(118, 118, 136);

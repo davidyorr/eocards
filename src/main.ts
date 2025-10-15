@@ -1,6 +1,6 @@
 import { createApp } from "vue";
 import App from "./App.vue";
-import "./reset.css";
+import "@picocss/pico/css/pico.min.css";
 import "./styles.css";
 import { router } from "./router";
 

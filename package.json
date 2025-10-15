@@ -15,6 +15,7 @@
 		"supabase:migration-up": "echo 'SUPABASE_ACCESS_TOKEN:' && read SUPABASE_ACCESS_TOKEN && SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase migration up"
 	},
 	"dependencies": {
+		"@picocss/pico": "2.1.1",
 		"@supabase/supabase-js": "2.49.1",
 		"register-service-worker": "1.7.2",
 		"vue": "3.5.13",

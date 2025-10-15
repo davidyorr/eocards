@@ -160,7 +160,11 @@ onMounted(async () => {
 		z-index: 1001;
 		padding: 24px;
 		background-color: white;
-		color: black;
+
+		h1,
+		label {
+			color: black;
+		}
 	}
 }
 </style>

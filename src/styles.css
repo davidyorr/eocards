@@ -1,37 +1,6 @@
-html {
-	box-sizing: border-box;
-}
-
-*,
-*:before,
-*:after {
-	box-sizing: inherit;
-}
-
-* {
-	font: inherit;
-}
-
 :root {
 	--error-message-color: rgb(255, 57, 57);
 	--card-background-color: rgb(248, 249, 250);
 
 	--navbar-height: 36px;
-}
-
-html {
-	font-family: Avenir, Helvetica, Arial, sans-serif;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	text-align: center;
-}
-
-body {
-	color: rgb(33, 34, 51);
-	background-color: rgb(233, 236, 239);
-}
-
-button {
-	border: none;
-	padding: 8px 12px;
 }

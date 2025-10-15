@@ -66,6 +66,8 @@ function handleFlipClick() {
 		height: 80%;
 		font-size: 3rem;
 		align-content: center;
+		text-align: center;
+		color: rgb(33, 34, 51);
 
 		.controls {
 			position: absolute;

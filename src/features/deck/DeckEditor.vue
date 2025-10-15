@@ -339,6 +339,7 @@ function handleSaveClick() {
 			label {
 				display: inline-block;
 				align-self: center;
+				color: rgb(33, 34, 51);
 			}
 
 			textarea {
