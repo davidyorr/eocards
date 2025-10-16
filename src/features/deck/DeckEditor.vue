@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Database } from "@/database.types";
 import { supabase } from "../../utils/supabase";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
 import { useDeck } from "./useDeck";
 import { notificationsStore } from "@/stores/notificationsStore";
+import TrashIcon from "~icons/qlementine-icons/trash-16";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -23,6 +24,14 @@ const deckAttributes = ref<
 
 const { deck } = useDeck(deckId);
 const { cards: editedCards } = useCards(deckId);
+
+const cardsToDelete = ref<Array<number>>([]);
+
+const visibleCards = computed(() => {
+	return editedCards.value.filter(
+		(card) => !cardsToDelete.value.includes(card.id),
+	);
+});
 
 onMounted(() => {
 	fetchAttributeTypes();
@@ -58,11 +67,43 @@ async function saveCards() {
 	}
 
 	try {
+		// handle deletions first
+		if (cardsToDelete.value.length > 0) {
+			console.log("deleting cards", cardsToDelete.value);
+			const { error: deleteError } = await supabase
+				.from("card")
+				.delete()
+				.in("id", cardsToDelete.value);
+
+			if (deleteError) {
+				console.error("Error deleting cards:", deleteError);
+				notificationsStore.queueNotification({
+					message: `Error: ${deleteError.message}`,
+					type: "ERROR",
+				});
+				return;
+			}
+		}
+
+		// prepare cards to upsert (excluding those we just deleted)
+		const cardsToUpsert = editedCards.value.filter(
+			(card) => !cardsToDelete.value.includes(card.id),
+		);
+
+		// if there's nothing left to save, we're done
+		if (cardsToUpsert.length === 0) {
+			notificationsStore.queueNotification({
+				message: "Saved Cards",
+				type: "SUCCESS",
+			});
+			return;
+		}
+
 		type CardAttributeValue =
-			(typeof editedCards.value)[number]["card_attribute_value"][number];
+			(typeof cardsToUpsert)[number]["card_attribute_value"][number];
 		// keep track of temporary IDs and their associated attributes
 		const tempIdToAttributesMap = new Map<number, Array<CardAttributeValue>>();
-		const cardsToSave = editedCards.value.map((card) => {
+		const cardsToSave = cardsToUpsert.map((card) => {
 			if (card.id === undefined) {
 				throw Error(`card missing id ${card.front_content}`);
 			}
@@ -113,7 +154,7 @@ async function saveCards() {
 		> = [];
 
 		// first handle attributes for existing cards
-		editedCards.value.forEach((card) => {
+		cardsToUpsert.forEach((card) => {
 			if (card.id >= 0 && card.card_attribute_value) {
 				card.card_attribute_value.forEach((attribute) => {
 					if (attribute.id === undefined) {
@@ -142,7 +183,7 @@ async function saveCards() {
 		// then handle attributes for newly created cards
 		if (savedCards) {
 			// map the original cards to the saved cards to find corresponding IDs
-			editedCards.value.forEach((originalCard, index) => {
+			cardsToUpsert.forEach((originalCard, index) => {
 				if (originalCard.id < 0) {
 					// get the equivalent card that was saved
 					const savedCard = savedCards[index];
@@ -186,6 +227,14 @@ async function saveCards() {
 				console.error("Error saving attributes:", attributeSaveError);
 			}
 		}
+
+		// update local state
+		if (cardsToDelete.value.length > 0) {
+			editedCards.value = editedCards.value.filter(
+				(card) => !cardsToDelete.value.includes(card.id),
+			);
+		}
+		cardsToDelete.value = [];
 
 		notificationsStore.queueNotification({
 			message: "Saved Cards",
@@ -255,6 +304,16 @@ function handleNewCardClick() {
 function handleSaveClick() {
 	saveCards();
 }
+
+function handleRemoveCardClick(cardId: number) {
+	if (cardId < 0) {
+		// this is a new, unsaved card, so we can just remove it from the local list
+		editedCards.value = editedCards.value.filter((c) => c.id !== cardId);
+	} else {
+		// this is an existing card, so we need to mark it for deletion on the next save
+		cardsToDelete.value.push(cardId);
+	}
+}
 </script>
 
 <template>
@@ -281,7 +340,13 @@ function handleSaveClick() {
 		<h2>Cards</h2>
 		<button @click="handleSaveClick">Save Cards</button>
 		<div class="cards">
-			<div v-for="card in editedCards" :key="card.id" class="card">
+			<div v-for="card in visibleCards" :key="card.id" class="card">
+				<button
+					class="remove-card-button"
+					@click="handleRemoveCardClick(card.id)"
+				>
+					<TrashIcon />
+				</button>
 				<div class="input-container">
 					<label>Front</label>
 					<textarea
@@ -319,6 +384,7 @@ function handleSaveClick() {
 		grid-auto-flow: dense;
 
 		.card {
+			position: relative;
 			box-shadow: rgba(100, 100, 111, 0.2) 0px 0px 6px 0px;
 			padding: 12px;
 
@@ -340,6 +406,18 @@ function handleSaveClick() {
 				margin-left: 4px;
 				resize: none;
 			}
+		}
+
+		.remove-card-button {
+			position: absolute;
+			top: 2px;
+			right: 2px;
+
+			width: auto;
+			background: none;
+			border: none;
+			padding: 0.25rem;
+			color: var(--secondary);
 		}
 	}
 
