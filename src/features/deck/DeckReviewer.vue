@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
 
@@ -8,6 +8,9 @@ const deckId = Number.parseInt(String(route.params.id));
 const { cards } = useCards(deckId);
 const currentCardIndex = ref(0);
 const viewingFront = ref(true);
+const progressText = computed(() => {
+	return `${currentCardIndex.value + 1} / ${cards.value.length}`;
+});
 
 function handlePreviousClick() {
 	viewingFront.value = true;
@@ -37,6 +40,7 @@ function handleFlipClick() {
 <template>
 	<div class="cards" v-if="cards.length > 0">
 		<article class="card-content">
+			<span class="progress-indicator">{{ progressText }}</span>
 			<div class="controls">
 				<div class="prev-button" @click="handlePreviousClick"></div>
 				<div class="flip-button" @click="handleFlipClick"></div>
@@ -65,6 +69,15 @@ function handleFlipClick() {
 		font-size: 3rem;
 		align-content: center;
 		text-align: center;
+
+		.progress-indicator {
+			position: absolute;
+			top: 0;
+			right: 0;
+			line-height: 1;
+			padding: 0.5rem;
+			font-size: 1rem;
+		}
 
 		.controls {
 			position: absolute;
