@@ -61,13 +61,15 @@ test("something", async ({ createUser, page }) => {
 	await page.getByTestId("review-deck").click();
 	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/review\/[0-9]+/);
 
-	await expect(page.locator(".card-content")).toHaveText("Crono");
+	const cardText = page.getByTestId("card-text");
+
+	await expect(cardText).toHaveText("Crono");
 	await page.locator(".flip-button").click();
-	await expect(page.locator(".card-content")).toHaveText("Light");
+	await expect(cardText).toHaveText("Light");
 	await page.locator(".next-button").click();
-	await expect(page.locator(".card-content")).toHaveText("Marle");
+	await expect(cardText).toHaveText("Marle");
 	await page.locator(".flip-button").click();
-	await expect(page.locator(".card-content")).toHaveText("Water (Ice)");
+	await expect(cardText).toHaveText("Water (Ice)");
 	await page.locator(".next-button").click();
-	await expect(page.locator(".card-content")).toHaveText("Crono");
+	await expect(cardText).toHaveText("Crono");
 });

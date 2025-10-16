@@ -46,11 +46,13 @@ function handleFlipClick() {
 				<div class="flip-button" @click="handleFlipClick"></div>
 				<div class="next-button" @click="handleNextClick"></div>
 			</div>
-			{{
-				viewingFront
-					? cards[currentCardIndex].front_content
-					: cards[currentCardIndex].card_attribute_value[0].value
-			}}
+			<div class="main-content" data-testid="card-text">
+				{{
+					viewingFront
+						? cards[currentCardIndex].front_content
+						: cards[currentCardIndex].card_attribute_value[0].value
+				}}
+			</div>
 		</article>
 	</div>
 	<h2 v-else>no cards</h2>
@@ -64,11 +66,17 @@ function handleFlipClick() {
 	height: 100%;
 
 	.card-content {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
 		position: relative;
 		height: 80%;
-		font-size: 3rem;
 		align-content: center;
 		text-align: center;
+
+		.main-content {
+			font-size: 3rem;
+		}
 
 		.progress-indicator {
 			position: absolute;
@@ -76,7 +84,6 @@ function handleFlipClick() {
 			right: 0;
 			line-height: 1;
 			padding: 0.5rem;
-			font-size: 1rem;
 		}
 
 		.controls {
