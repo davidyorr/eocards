@@ -319,8 +319,6 @@ function handleSaveClick() {
 		grid-auto-flow: dense;
 
 		.card {
-			background-color: var(--card-background-color);
-			border-radius: 12px;
 			box-shadow: rgba(100, 100, 111, 0.2) 0px 0px 6px 0px;
 			padding: 12px;
 
@@ -330,16 +328,12 @@ function handleSaveClick() {
 			}
 
 			.input-container:not(:last-child) {
-				/* display: grid;
-				grid-template-columns: minmax(0, 1fr) auto;
-				align-items: center; */
 				margin-bottom: 8px;
 			}
 
 			label {
 				display: inline-block;
 				align-self: center;
-				color: rgb(33, 34, 51);
 			}
 
 			textarea {
@@ -350,9 +344,7 @@ function handleSaveClick() {
 	}
 
 	button {
-		background-color: rgb(43, 86, 175);
 		width: 256px;
-		color: white;
 		cursor: pointer;
 	}
 }

@@ -61,13 +61,10 @@ function handleFlipClick() {
 
 	.card-content {
 		position: relative;
-		background-color: var(--card-background-color);
-		box-shadow: rgba(100, 100, 111, 0.2) 0px 0px 30px 0px;
 		height: 80%;
 		font-size: 3rem;
 		align-content: center;
 		text-align: center;
-		color: rgb(33, 34, 51);
 
 		.controls {
 			position: absolute;
