@@ -1,15 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
-const { cards } = useCards(deckId);
+const { cards, loading } = useCards(deckId);
 const currentCardIndex = ref(0);
 const viewingFront = ref(true);
+// delay showing empty card content to avoid flicker on fast loads
+const showEmptyCardContent = ref(false);
 const progressText = computed(() => {
 	return `${currentCardIndex.value + 1} / ${cards.value.length}`;
+});
+
+onMounted(() => {
+	setTimeout(() => {
+		showEmptyCardContent.value = true;
+	}, 500);
 });
 
 function handlePreviousClick() {
@@ -38,6 +46,7 @@ function handleFlipClick() {
 </script>
 
 <template>
+	<!-- if there are cards, always show them immediately -->
 	<div class="cards" v-if="cards.length > 0">
 		<article class="card-content">
 			<span class="progress-indicator">{{ progressText }}</span>
@@ -55,11 +64,39 @@ function handleFlipClick() {
 			</div>
 		</article>
 	</div>
-	<h2 v-else>no cards</h2>
+
+	<!-- otherwise show the empty card container -->
+	<div class="empty-card-container" v-else>
+		<article class="card-content">
+			<div class="main-content">
+				<!-- if the delay has passed, show either the loader or the no cards message -->
+				<div class="loader" v-if="showEmptyCardContent && loading"></div>
+				<div v-else-if="showEmptyCardContent && !loading">
+					No cards in this deck.
+				</div>
+			</div>
+		</article>
+	</div>
 </template>
 
 <style scoped>
-.cards {
+.loader {
+	width: 1.4em;
+	height: 1.4em;
+	border: 0.13em solid var(--pico-color);
+	border-top-color: var(--pico-primary-background);
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.cards,
+.empty-card-container {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -72,10 +109,11 @@ function handleFlipClick() {
 		position: relative;
 		height: 80%;
 		align-content: center;
-		text-align: center;
 
 		.main-content {
+			display: flex;
 			font-size: 3rem;
+			justify-content: center;
 		}
 
 		.progress-indicator {
