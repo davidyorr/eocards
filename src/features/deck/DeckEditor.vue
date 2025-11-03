@@ -60,13 +60,27 @@ async function fetchAttributeTypes() {
 	}
 }
 
-async function saveCards() {
-	console.log("saving cards", editedCards);
+async function saveDeck() {
+	console.log("saving deck", editedCards);
 	if (Number.isNaN(deckId)) {
 		return;
 	}
 
 	try {
+		// save deck changes
+		if (deck.value) {
+			console.log("saving deck changes", deck.value);
+			const { error } = await supabase
+				.from("deck")
+				.update({ name: deck.value.name })
+				.eq("id", deckId);
+
+			if (error) {
+				console.error("Error saving deck change:", error);
+				return;
+			}
+		}
+
 		// handle deletions first
 		if (cardsToDelete.value.length > 0) {
 			console.log("deleting cards", cardsToDelete.value);
@@ -93,7 +107,7 @@ async function saveCards() {
 		// if there's nothing left to save, we're done
 		if (cardsToUpsert.length === 0) {
 			notificationsStore.queueNotification({
-				message: "Saved Cards",
+				message: "Saved Deck",
 				type: "SUCCESS",
 			});
 			return;
@@ -237,7 +251,7 @@ async function saveCards() {
 		cardsToDelete.value = [];
 
 		notificationsStore.queueNotification({
-			message: "Saved Cards",
+			message: "Saved Deck",
 			type: "SUCCESS",
 		});
 	} catch (error) {
@@ -302,7 +316,7 @@ function handleNewCardClick() {
 }
 
 function handleSaveClick() {
-	saveCards();
+	saveDeck();
 }
 
 function handleRemoveCardClick(cardId: number) {
@@ -317,8 +331,18 @@ function handleRemoveCardClick(cardId: number) {
 </script>
 
 <template>
-	<div class="content">
-		<h1>Deck Editor {{ deck?.name }}</h1>
+	<div class="content" v-if="deck">
+		<h1>Deck Editor</h1>
+		<div class="deck-settings">
+			<label>
+				Deck Name:
+				<input v-model="deck.name" />
+			</label>
+			<!-- <label>
+				Description:
+				<textarea v-model="deck.description"></textarea>
+			</label> -->
+		</div>
 		<h2>Attributes</h2>
 		<div>
 			<input v-model="newAttributeName" placeholder="name" />
@@ -338,7 +362,7 @@ function handleRemoveCardClick(cardId: number) {
 			</div>
 		</div>
 		<h2>Cards</h2>
-		<button @click="handleSaveClick">Save Cards</button>
+		<button @click="handleSaveClick">Save Deck</button>
 		<div class="cards">
 			<div v-for="card in visibleCards" :key="card.id" class="card">
 				<button

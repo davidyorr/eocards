@@ -20,7 +20,7 @@ test("something", async ({ createUser, page }) => {
 
 	// navigate to the edit page
 	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/edit\/[0-9]+/);
-	await expect(page.getByText("Deck Editor Chrono Trigger")).toBeVisible();
+	await expect(page.getByText("Deck Editor")).toBeVisible();
 
 	// add attribute
 	await page.getByPlaceholder("name").fill("Magical Element");
@@ -51,14 +51,36 @@ test("something", async ({ createUser, page }) => {
 	parent = page.locator(".input-container").filter({ has: magicLabel }).nth(1);
 	await parent.getByRole("textbox").fill("Water (Ice)");
 
-	// save cards
-	await page.getByRole("button", { name: "Save Cards" }).click();
+	// save deck and cards
+	await page.getByRole("button", { name: "Save Deck" }).click();
 	await expect(
-		page.locator(".notification", { hasText: "Saved Cards" }),
+		page.locator(".notification", { hasText: "Saved Deck" }),
 	).toHaveCount(1);
 
-	// navigate to the review page
-	await page.getByTestId("review-deck").click();
+	// check that the deck name input has the correct initial value before editing
+	await expect(page.getByLabel("Deck Name:")).toHaveValue("Chrono Trigger");
+
+	// edit the deck name
+	await page.getByLabel("Deck Name:").fill("Chrono Trigger Remastered");
+	await page.getByRole("button", { name: "Save Deck" }).click();
+
+	// navigate back to the dashboard to verify the name change
+	await page.goto("/");
+	await expect(page).toHaveURL("http://localhost:8080/");
+
+	// check that the deck with the new name is visible on the dashboard
+	const deckOnDashboard = page.getByText("Chrono Trigger Remastered", {
+		exact: true,
+	});
+	await expect(deckOnDashboard).toBeVisible();
+
+	// check that the old name is not present
+	await expect(
+		page.getByText("Chrono Trigger", { exact: true }),
+	).not.toBeVisible();
+
+	// from the dashboard, click the deck name to navigate to the review page
+	await deckOnDashboard.click();
 	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/review\/[0-9]+/);
 
 	const cardText = page.getByTestId("card-text");
