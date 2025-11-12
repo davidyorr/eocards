@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { supabase } from "../../utils/supabase";
 import { ref } from "vue";
+import eocardsLogo from "@/assets/eocards-logo.svg";
 
 const router = useRouter();
 
@@ -29,7 +30,7 @@ async function handleLoginButtonClick() {
 
 <template>
 	<div class="content">
-		<div class="logo">LOGO</div>
+		<img :src="eocardsLogo" alt="Eocards Logo" class="logo" />
 		<input id="email" v-model="email" placeholder="email" />
 		<input
 			id="password"
@@ -54,10 +55,10 @@ async function handleLoginButtonClick() {
 
 	.logo {
 		margin-top: 12px;
-		width: 256px;
-		height: 256px;
-		line-height: 256px;
-		border: 1px solid grey;
+		width: auto;
+		height: auto;
+		max-width: 100%;
+		max-height: 256px;
 	}
 
 	input {
