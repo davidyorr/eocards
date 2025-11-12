@@ -1,0 +1,45 @@
+<svg width="434.3" height="434.3" viewBox="157.5 -157.8 434.3 434.3" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- This mask will be used to add a gap between the circle and the lightning bolt. -->
+    <mask id="cutout-mask">
+      <rect x="157.465" y="-165" width="434.3" height="434.3" fill="white" />
+      <path
+        d="M 478.8 -157.8
+           L 324.3 74
+           L 370   74
+           L 263.4 276.6
+           L 436.1 35.4
+           L 390.4 35.4
+           Z"
+        stroke-width="19"
+        stroke="black"
+        fill="black"
+      />
+    </mask>
+  </defs>
+
+  <g id="svgGroup" stroke-linecap="round" fill-rule="evenodd" font-size="9pt">
+    <!-- Circle -->
+    <circle
+      cx="374.6"
+      cy="60"
+      r="130"
+      stroke="#900020"
+      stroke-width="16"
+      fill="none"
+      mask="url(#cutout-mask)"
+    />
+
+    <!-- Lightning Bolt -->
+    <path
+      d="M 478.8 -157.8
+         L 324.3 74
+         L 370   74
+         L 263.4 276.6
+         L 436.1 35.4
+         L 390.4 35.4
+         Z"
+      fill="#ffbf00"
+    />
+  </g>
+</svg>
