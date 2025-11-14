@@ -68,7 +68,7 @@ async function handleLoginButtonClick() {
 	button {
 		width: 100%;
 		color: black;
-		background-color: #ffbf00;
+		background-color: var(--primary);
 	}
 
 	#error-message {
