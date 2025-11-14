@@ -81,7 +81,7 @@ async function handleDeckClick(deckId: number) {
 			</button>
 			<div class="confirm-cancel-container">
 				<button
-					class="cancel"
+					class="secondary"
 					v-show="createNewDeckVisibility"
 					@click="handleCancelClick"
 					alt="cancel"
@@ -96,19 +96,19 @@ async function handleDeckClick(deckId: number) {
 					<ConfirmIcon />
 				</button>
 			</div>
-			<div v-show="createNewDeckVisibility">
+			<div v-show="createNewDeckVisibility" class="input-wrapper">
 				<input placeholder="name" v-model="newDeckName" />
 			</div>
 		</div>
 		<div class="deck-list">
-			<div
+			<article
 				class="deck-row"
 				v-for="deck in decks"
 				:key="deck.id"
 				@click="handleDeckClick(deck.id)"
 			>
 				{{ deck.name }}
-			</div>
+			</article>
 		</div>
 	</div>
 </template>
@@ -118,15 +118,13 @@ async function handleDeckClick(deckId: number) {
 	max-width: 400px;
 	margin: 0 auto;
 	padding: 12px 0;
-	text-align: justify;
 
 	.new-deck-container {
 		display: grid;
-		grid-template-columns: 138px auto;
-
-		.cancel {
-			background-color: rgb(118, 118, 136);
-		}
+		grid-template-columns: auto 1fr;
+		gap: 8px;
+		align-items: center;
+		margin-bottom: 24px;
 
 		input {
 			width: 100%;
@@ -135,22 +133,55 @@ async function handleDeckClick(deckId: number) {
 		}
 	}
 
+	.new-deck-button {
+		padding: 0.75rem 1.5rem;
+		width: 100%;
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		gap: 4px;
+	}
+
 	.confirm-cancel-container {
 		display: flex;
-		margin: 0 auto;
 		gap: 8px;
 
 		button {
-			border-radius: 12px;
+			width: 2.75rem;
+			height: 2.75rem;
+			padding: 0;
+			margin: 0;
+		}
+	}
+
+	.input-wrapper {
+		width: 100%;
+		height: 100%;
+
+		input {
+			width: 100%;
+			height: 100%;
+			margin: 0;
 		}
 	}
 
 	.deck-list {
-		padding: 8px 0;
+		display: grid;
 
 		.deck-row {
-			padding: 2px 0;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 1rem 1.25rem;
 			cursor: pointer;
+			transition:
+				transform 0.2s ease-in-out,
+				box-shadow 0.2s ease-in-out;
+
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: var(--pico-card-box-shadow);
+			}
 		}
 	}
 
@@ -158,15 +189,10 @@ async function handleDeckClick(deckId: number) {
 		display: inline-flex;
 		justify-content: center;
 		align-items: center;
-		background-color: rgb(43, 86, 175);
 		color: white;
 		padding: 8px 16px;
 		gap: 4px;
 		cursor: pointer;
-	}
-
-	.new-deck-button {
-		padding-left: 24px;
 	}
 }
 </style>
