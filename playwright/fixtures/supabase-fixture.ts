@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/utils/supabase";
 import { test as base } from "@playwright/test";
+import { Database } from "@/database.types";
 
 type TestUser = {
 	id: string;
@@ -7,11 +8,14 @@ type TestUser = {
 	password: string;
 };
 
+type TableName = keyof Database["public"]["Tables"];
+
 const createdUsers: TestUser[] = [];
 
 export const test = base.extend<{
 	createUser: (options?: Partial<TestUser>) => Promise<TestUser>;
 	cleanupUsers: void;
+	logOnFailure: void;
 }>({
 	createUser: async ({}, use) => {
 		await use(async (options?: Partial<TestUser>): Promise<TestUser> => {
@@ -55,6 +59,40 @@ export const test = base.extend<{
 				}
 
 				createdUsers.length = 0;
+			}
+		},
+		{ auto: true },
+	],
+
+	logOnFailure: [
+		async ({}, use, testInfo) => {
+			await use();
+
+			if (testInfo.status !== testInfo.expectedStatus) {
+				console.log("--- DATABASE STATE ---");
+
+				const supabaseAdmin = getSupabaseAdmin();
+				const tableNames: Array<TableName> = [
+					"deck",
+					"card",
+					"deck_attribute_type",
+					"card_attribute_value",
+					"user",
+				] as const;
+
+				for (const table of tableNames) {
+					const { data, error } = await supabaseAdmin.from(table).select("*");
+
+					console.log(`\n--- Table: ${table} ---`);
+					if (error) {
+						console.error(`Error fetching data for ${table}:`, error.message);
+					} else if (data && data.length > 0) {
+						console.table(data);
+					} else {
+						console.log("[] (No data found)");
+					}
+				}
+				console.log("\n--- END OF DATABASE STATE ---");
 			}
 		},
 		{ auto: true },
