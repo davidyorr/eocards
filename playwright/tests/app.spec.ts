@@ -3,7 +3,7 @@ import { takeScreenshotOnFailure } from "./util";
 
 test.afterEach(takeScreenshotOnFailure);
 
-test("something", async ({ createUser, page }) => {
+test("create and review speedster deck", async ({ createUser, page }) => {
 	const user = await createUser();
 
 	// log in
@@ -15,41 +15,68 @@ test("something", async ({ createUser, page }) => {
 	// create a deck
 	await expect(page).toHaveURL("http://localhost:8080/");
 	await page.getByRole("button", { name: "New Deck" }).click();
-	await page.getByPlaceholder("name").fill("Chrono Trigger");
+	await page.getByPlaceholder("name").fill("Speedsters");
 	await page.getByAltText("confirm").click();
 
 	// navigate to the edit page
 	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/edit\/[0-9]+/);
 	await expect(page.getByText("Deck Editor")).toBeVisible();
 
-	// add attribute
-	await page.getByPlaceholder("name").fill("Magical Element");
+	// --- ADD ATTRIBUTES ---
+
+	// Attribute 1: Secret Identity (This will be visible in Review)
+	await page.getByPlaceholder("name").fill("Secret Identity");
 	await page.getByRole("button", { name: "Add Attribute" }).click();
-	await expect(page.locator(".attributes-container")).toHaveText(
-		"Magical Element - text",
+
+	// Attribute 2: Lightning Color (We save this, but don't check it in Review yet)
+	await page.getByPlaceholder("name").fill("Lightning Color");
+	await page.getByRole("button", { name: "Add Attribute" }).click();
+
+	// Check that attributes are listed in the editor
+	await expect(page.locator(".attributes-container")).toContainText(
+		"Secret Identity - text",
+	);
+	await expect(page.locator(".attributes-container")).toContainText(
+		"Lightning Color - text",
 	);
 
-	// add cards
+	// --- ADD CARDS ---
 	await page.getByRole("button", { name: "New Card" }).click();
 	await page.getByRole("button", { name: "New Card" }).click();
 
+	// Helper labels for locating inputs
 	const frontLabel = page.locator("label", { hasText: "Front" });
-	const magicLabel = page.locator("label", { hasText: "Magical Element" });
+	const identityLabel = page.locator("label", { hasText: "Secret Identity" });
+	const colorLabel = page.locator("label", { hasText: "Lightning Color" });
 
+	// --- FILL CARD 1 (The Flash) ---
 	let parent = page
 		.locator(".input-container")
 		.filter({ has: frontLabel })
 		.nth(0);
-	await parent.getByRole("textbox").fill("Crono");
+	await parent.getByRole("textbox").fill("The Flash");
 
-	parent = page.locator(".input-container").filter({ has: magicLabel }).nth(0);
-	await parent.getByRole("textbox").fill("Light");
+	parent = page
+		.locator(".input-container")
+		.filter({ has: identityLabel })
+		.nth(0);
+	await parent.getByRole("textbox").fill("Barry Allen");
 
+	parent = page.locator(".input-container").filter({ has: colorLabel }).nth(0);
+	await parent.getByRole("textbox").fill("Yellow");
+
+	// --- FILL CARD 2 (Reverse-Flash) ---
 	parent = page.locator(".input-container").filter({ has: frontLabel }).nth(1);
-	await parent.getByRole("textbox").fill("Marle");
+	await parent.getByRole("textbox").fill("Reverse-Flash");
 
-	parent = page.locator(".input-container").filter({ has: magicLabel }).nth(1);
-	await parent.getByRole("textbox").fill("Water (Ice)");
+	parent = page
+		.locator(".input-container")
+		.filter({ has: identityLabel })
+		.nth(1);
+	await parent.getByRole("textbox").fill("Eobard Thawne");
+
+	parent = page.locator(".input-container").filter({ has: colorLabel }).nth(1);
+	await parent.getByRole("textbox").fill("Red");
 
 	// save deck and cards
 	await page.getByRole("button", { name: "Save Deck" }).click();
@@ -58,10 +85,10 @@ test("something", async ({ createUser, page }) => {
 	).toHaveCount(1);
 
 	// check that the deck name input has the correct initial value before editing
-	await expect(page.getByLabel("Deck Name:")).toHaveValue("Chrono Trigger");
+	await expect(page.getByLabel("Deck Name:")).toHaveValue("Speedsters");
 
 	// edit the deck name
-	await page.getByLabel("Deck Name:").fill("Chrono Trigger Remastered");
+	await page.getByLabel("Deck Name:").fill("Speedsters of Central City");
 	await page.getByRole("button", { name: "Save Deck" }).click();
 
 	// navigate back to the dashboard to verify the name change
@@ -69,29 +96,37 @@ test("something", async ({ createUser, page }) => {
 	await expect(page).toHaveURL("http://localhost:8080/");
 
 	// check that the deck with the new name is visible on the dashboard
-	const deckOnDashboard = page.getByText("Chrono Trigger Remastered", {
+	const deckOnDashboard = page.getByText("Speedsters of Central City", {
 		exact: true,
 	});
 	await expect(deckOnDashboard).toBeVisible();
 
 	// check that the old name is not present
-	await expect(
-		page.getByText("Chrono Trigger", { exact: true }),
-	).not.toBeVisible();
+	await expect(page.getByText("Speedsters", { exact: true })).not.toBeVisible();
 
 	// from the dashboard, click the deck name to navigate to the review page
 	await deckOnDashboard.click();
 	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/review\/[0-9]+/);
 
+	// --- REVIEW FLOW ---
 	const cardText = page.getByTestId("card-text");
 
-	await expect(cardText).toHaveText("Crono");
+	// Card 1: The Flash
+	await expect(cardText).toHaveText("The Flash");
 	await page.locator(".flip-button").click();
-	await expect(cardText).toHaveText("Light");
+	// Only check the first attribute for now
+	await expect(cardText).toHaveText("Barry Allen");
+
 	await page.locator(".next-button").click();
-	await expect(cardText).toHaveText("Marle");
+
+	// Card 2: Reverse-Flash
+	await expect(cardText).toHaveText("Reverse-Flash");
 	await page.locator(".flip-button").click();
-	await expect(cardText).toHaveText("Water (Ice)");
+	// Only check the first attribute for now
+	await expect(cardText).toHaveText("Eobard Thawne");
+
+	// Cycle back to start
 	await page.locator(".next-button").click();
-	await expect(cardText).toHaveText("Crono");
+
+	await expect(cardText).toHaveText("The Flash");
 });
