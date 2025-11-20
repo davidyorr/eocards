@@ -224,6 +224,18 @@ async function saveDeck() {
 							});
 						});
 					}
+
+					// update the local state with the new real ID from the database
+					if (savedCard) {
+						originalCard.id = savedCard.id;
+						// ensure local attributes know about the new positive card ID to prevent
+						// potential issues if you edit attributes immediately after saving
+						if (originalCard.card_attribute_value) {
+							originalCard.card_attribute_value.forEach((attr) => {
+								attr.card_id = savedCard.id;
+							});
+						}
+					}
 				}
 			});
 		}
