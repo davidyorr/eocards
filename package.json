@@ -5,7 +5,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "vite",
-		"build": "vue-cli-service build",
+		"build": "vite build",
+		"preview": "vite preview",
 		"format": "prettier --write '{**/*,*}.{ts,vue,css}'",
 		"lint": "npx eslint src",
 		"test": "NODE_ENV=test npx playwright test",
