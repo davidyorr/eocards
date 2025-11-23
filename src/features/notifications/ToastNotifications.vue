@@ -26,20 +26,27 @@ import { notificationsStore } from "@/stores/notificationsStore";
 	gap: 12px;
 	flex-direction: column;
 	position: fixed;
-	bottom: 0;
+	bottom: calc(12px + var(--safe-area-bottom));
 	width: 100%;
+
 	align-items: center;
 	justify-content: center;
-
-	color: rgb(255, 255, 255);
+	pointer-events: none;
 
 	.notification {
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		pointer-events: auto;
 
-		width: 100%;
+		width: auto;
+		max-width: 90%;
 		height: 48px;
+
+		padding: 12px 24px;
+		border-radius: 8px;
+		box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+		color: rgb(255, 255, 255);
 
 		&.success {
 			background-color: green;

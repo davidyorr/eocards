@@ -88,14 +88,18 @@ nav {
 	}
 	position: sticky;
 	top: 0;
-	height: var(--navbar-height);
+	padding-top: var(--safe-area-top);
+	height: calc(var(--navbar-height) + var(--safe-area-top));
 	width: 100%;
+
 	align-items: center;
 	justify-content: center;
 
 	background-color: rgb(52, 58, 64);
 	box-shadow: rgba(0, 0, 0, 0.04) 0px 3px 5px;
 	color: rgb(255, 255, 255);
+
+	z-index: 100;
 
 	svg {
 		cursor: pointer;

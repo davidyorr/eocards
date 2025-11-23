@@ -19,8 +19,9 @@ import ToastNotifications from "./features/notifications/ToastNotifications.vue"
 	main {
 		max-width: 1280px;
 		margin: 0 auto;
-		padding: 0 24px;
-		height: calc(100% - var(--navbar-height));
+		padding-left: max(24px, var(--safe-area-left));
+		padding-right: max(24px, var(--safe-area-right));
+		height: calc(100% - (var(--navbar-height) + var(--safe-area-top)));
 	}
 }
 </style>
