@@ -58,21 +58,28 @@ function handleReviewIconClick() {
 		<HomeIcon
 			v-if="userStore.user !== null"
 			:size="24"
+			color="var(--primary)"
 			@click="handleHomeIconClick"
 		/>
 		<EditIcon
 			v-if="$route.path.includes('/deck/review')"
 			:size="24"
+			color="var(--primary)"
 			@click="handleEditIconClick"
 		/>
 		<ReviewIcon
 			v-if="$route.path.includes('/deck/edit')"
 			:size="24"
+			color="var(--primary)"
 			@click="handleReviewIconClick"
 			data-testid="review-deck"
 		/>
 		<div v-if="userStore.user !== null" class="user-options-container">
-			<UserIcon :size="24" @click="handleUserIconClick" />
+			<UserIcon
+				:size="24"
+				color="var(--primary)"
+				@click="handleUserIconClick"
+			/>
 			<div v-if="userOptionsMenuVisibility" class="user-options">
 				<div class="preferences row" @click="handleSettingsClick">
 					<span>Settings</span>
