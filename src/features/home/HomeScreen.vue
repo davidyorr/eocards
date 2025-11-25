@@ -7,13 +7,18 @@ import {
 	PlusIcon,
 	CheckIcon as ConfirmIcon,
 	XIcon as CancelIcon,
+	Trash2Icon as DeleteIcon,
 } from "lucide-vue-next";
+import { notificationsStore } from "@/stores/notificationsStore";
 
 const router = useRouter();
 
 const newDeckName = ref("");
 const createNewDeckVisibility = ref(false);
 const decks = ref<Array<Database["public"]["Tables"]["deck"]["Row"]>>([]);
+const deckToDelete = ref<Database["public"]["Tables"]["deck"]["Row"] | null>(
+	null,
+);
 
 onMounted(() => {
 	fetchDecks();
@@ -69,10 +74,69 @@ async function handleConfirmClick() {
 async function handleDeckClick(deckId: number) {
 	router.push(`/deck/review/${deckId}`);
 }
+
+async function handleConfirmDeleteClick() {
+	if (deckToDelete.value) {
+		try {
+			const { error } = await supabase
+				.from("deck")
+				.delete()
+				.eq("id", deckToDelete.value.id);
+
+			if (error) {
+				notificationsStore.queueNotification({
+					message: "Error deleting deck",
+					type: "ERROR",
+				});
+			} else {
+				notificationsStore.queueNotification({
+					message: "Deck deleted",
+					type: "SUCCESS",
+				});
+				decks.value = decks.value.filter(
+					(deck) => deck.id !== deckToDelete.value?.id,
+				);
+			}
+		} catch (error) {
+			console.error("Error deleting deck:", error);
+			notificationsStore.queueNotification({
+				message: "Error deleting deck",
+				type: "ERROR",
+			});
+		} finally {
+			deckToDelete.value = null;
+		}
+	}
+}
 </script>
 
 <template>
 	<div class="content">
+		<dialog :open="deckToDelete !== null">
+			<article>
+				<header>
+					<button aria-label="close" rel="prev" @click="deckToDelete = null">
+						<CancelIcon :size="24" />
+					</button>
+					<p>
+						<strong>Delete Deck?</strong>
+					</p>
+				</header>
+				<p>
+					Are you sure you want to delete deck
+					<strong>{{ deckToDelete?.name }}</strong
+					>?
+				</p>
+				<footer>
+					<button class="secondary" @click="deckToDelete = null">
+						<CancelIcon :size="24" /> Cancel
+					</button>
+					<button class="danger" @click="handleConfirmDeleteClick">
+						<ConfirmIcon :size="24" /> Confirm
+					</button>
+				</footer>
+			</article>
+		</dialog>
 		<div class="new-deck-container">
 			<button
 				v-show="!createNewDeckVisibility"
@@ -109,7 +173,10 @@ async function handleDeckClick(deckId: number) {
 				:key="deck.id"
 				@click="handleDeckClick(deck.id)"
 			>
-				{{ deck.name }}
+				<span>{{ deck.name }}</span>
+				<button class="delete-deck-button" @click.stop="deckToDelete = deck">
+					<DeleteIcon :size="20" />
+				</button>
 			</article>
 		</div>
 	</div>
@@ -184,6 +251,25 @@ async function handleDeckClick(deckId: number) {
 				transform: translateY(-2px);
 				box-shadow: var(--pico-card-box-shadow);
 			}
+
+			.delete-deck-button {
+				background: transparent;
+				border: none;
+				padding: 8px;
+				margin: -8px;
+				color: var(--pico-muted-color);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: color 0.2s;
+				width: auto;
+
+				&:hover,
+				&:focus {
+					color: var(--error-message-color);
+					transform: scale(1.1);
+				}
+			}
 		}
 	}
 
@@ -195,6 +281,11 @@ async function handleDeckClick(deckId: number) {
 		padding: 8px 16px;
 		gap: 4px;
 		cursor: pointer;
+	}
+
+	.danger {
+		background-color: var(--error-message-color);
+		border-color: var(--error-message-color);
 	}
 }
 </style>
