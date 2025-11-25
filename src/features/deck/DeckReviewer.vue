@@ -51,11 +51,14 @@ function handleFlipClick() {
 		<article class="card-content">
 			<span class="progress-indicator">{{ progressText }}</span>
 			<div class="controls">
-				<div class="prev-button" @click="handlePreviousClick"></div>
-				<div class="flip-button" @click="handleFlipClick"></div>
-				<div class="next-button" @click="handleNextClick"></div>
+				<div class="prev-button" @click.stop="handlePreviousClick"></div>
+				<div class="next-button" @click.stop="handleNextClick"></div>
 			</div>
-			<div class="main-content" data-testid="card-text">
+			<div
+				class="main-content"
+				data-testid="card-text"
+				@click="handleFlipClick"
+			>
 				{{
 					viewingFront
 						? cards[currentCardIndex].front_content
@@ -101,6 +104,7 @@ function handleFlipClick() {
 	flex-direction: column;
 	justify-content: center;
 	height: 100%;
+	width: 100%;
 
 	.card-content {
 		display: flex;
@@ -108,12 +112,21 @@ function handleFlipClick() {
 		justify-content: center;
 		position: relative;
 		height: 80%;
+		width: 100%;
 		align-content: center;
+
+		border-radius: 16px;
 
 		.main-content {
 			display: flex;
 			font-size: 3rem;
 			justify-content: center;
+			text-align: center;
+			align-items: center;
+			width: 100%;
+			padding: 24px;
+			overflow-y: auto;
+			height: 100%;
 		}
 
 		.progress-indicator {
@@ -122,17 +135,39 @@ function handleFlipClick() {
 			right: 0;
 			line-height: 1;
 			padding: 0.5rem;
+			pointer-events: none;
 		}
 
 		.controls {
 			position: absolute;
+			display: flex;
+			justify-content: space-between;
 			width: 100%;
 			height: 100%;
 			top: 0;
 			left: 0;
 
-			display: grid;
-			grid-template-columns: 25% 50% 25%;
+			pointer-events: none;
+
+			.prev-button,
+			.next-button {
+				pointer-events: auto;
+				height: 100%;
+				width: 25%;
+			}
+		}
+	}
+
+	@media (max-width: 768px) {
+		.cards,
+		.empty-card-container {
+			justify-content: flex-start;
+		}
+
+		.card-content {
+			height: 100%;
+			background-color: transparent;
+			border-radius: 0;
 		}
 	}
 }
