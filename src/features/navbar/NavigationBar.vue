@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { userStore } from "@/stores/userStore";
 import Settings from "./Settings.vue";
-import HomeIcon from "~icons/qlementine-icons/home-16";
-import UserIcon from "~icons/qlementine-icons/user-16";
-import EditIcon from "~icons/qlementine-icons/pen-16";
-import ReviewIcon from "~icons/qlementine-icons/preview-16";
-import SettingsIcon from "~icons/qlementine-icons/settings-16";
-import LogOutIcon from "~icons/hugeicons/logout-01";
+import {
+	HomeIcon,
+	UserIcon,
+	EditIcon,
+	PlayCircleIcon as ReviewIcon,
+	SettingsIcon,
+	LogOutIcon,
+} from "lucide-vue-next";
 import { ref } from "vue";
 import { supabase } from "@/utils/supabase";
 import { useRoute, useRouter } from "vue-router";
@@ -53,26 +55,32 @@ function handleReviewIconClick() {
 
 <template>
 	<nav>
-		<HomeIcon v-if="userStore.user !== null" @click="handleHomeIconClick" />
+		<HomeIcon
+			v-if="userStore.user !== null"
+			:size="24"
+			@click="handleHomeIconClick"
+		/>
 		<EditIcon
 			v-if="$route.path.includes('/deck/review')"
+			:size="24"
 			@click="handleEditIconClick"
 		/>
 		<ReviewIcon
 			v-if="$route.path.includes('/deck/edit')"
+			:size="24"
 			@click="handleReviewIconClick"
 			data-testid="review-deck"
 		/>
 		<div v-if="userStore.user !== null" class="user-options-container">
-			<UserIcon @click="handleUserIconClick" />
+			<UserIcon :size="24" @click="handleUserIconClick" />
 			<div v-if="userOptionsMenuVisibility" class="user-options">
 				<div class="preferences row" @click="handleSettingsClick">
 					<span>Settings</span>
-					<SettingsIcon />
+					<SettingsIcon :size="24" />
 				</div>
 				<div class="logout row" @click="handleLogoutClick">
 					<span>Log out</span>
-					<LogOutIcon />
+					<LogOutIcon :size="24" />
 				</div>
 			</div>
 		</div>
@@ -84,7 +92,7 @@ function handleReviewIconClick() {
 nav {
 	&& {
 		display: flex;
-		gap: 8px;
+		gap: 24px;
 	}
 	position: sticky;
 	top: 0;
@@ -103,18 +111,22 @@ nav {
 
 	svg {
 		cursor: pointer;
+		width: 24px;
+		height: 24px;
 	}
 
 	.user-options-container {
 		display: flex;
 		position: relative;
+		align-items: center;
+		height: 100%;
 
 		.user-options {
 			position: absolute;
 			display: flex;
 			flex-direction: column;
 			white-space: nowrap;
-			top: 27px;
+			top: var(--navbar-height);
 			right: 0;
 			background-color: rgb(52, 58, 64);
 
@@ -123,8 +135,9 @@ nav {
 				display: flex;
 				justify-content: center;
 				gap: 8px;
-				padding: 4px 12px;
+				padding: 12px 16px;
 				width: 100%;
+				align-items: center;
 			}
 		}
 	}

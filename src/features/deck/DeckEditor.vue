@@ -6,7 +6,7 @@ import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
 import { useDeck } from "./useDeck";
 import { notificationsStore } from "@/stores/notificationsStore";
-import TrashIcon from "~icons/qlementine-icons/trash-16";
+import { TrashIcon } from "lucide-vue-next";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -381,7 +381,7 @@ function handleRemoveCardClick(cardId: number) {
 					class="remove-card-button"
 					@click="handleRemoveCardClick(card.id)"
 				>
-					<TrashIcon />
+					<TrashIcon :size="24" />
 				</button>
 				<div class="input-container">
 					<label>Front</label>

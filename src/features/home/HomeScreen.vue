@@ -3,9 +3,11 @@ import { Database } from "@/database.types";
 import { supabase } from "../../utils/supabase";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import PlusIcon from "~icons/qlementine-icons/plus-12";
-import ConfirmIcon from "~icons/qlementine-icons/check-tick-16";
-import CancelIcon from "~icons/qlementine-icons/close-12";
+import {
+	PlusIcon,
+	CheckIcon as ConfirmIcon,
+	XIcon as CancelIcon,
+} from "lucide-vue-next";
 
 const router = useRouter();
 
@@ -77,7 +79,7 @@ async function handleDeckClick(deckId: number) {
 				class="new-deck-button"
 				@click="handleNewDeckClick"
 			>
-				New Deck <PlusIcon />
+				New Deck <PlusIcon :size="24" />
 			</button>
 			<div class="confirm-cancel-container">
 				<button
@@ -86,14 +88,14 @@ async function handleDeckClick(deckId: number) {
 					@click="handleCancelClick"
 					alt="cancel"
 				>
-					<CancelIcon />
+					<CancelIcon :size="24" />
 				</button>
 				<button
 					v-show="createNewDeckVisibility"
 					@click="handleConfirmClick"
 					alt="confirm"
 				>
-					<ConfirmIcon />
+					<ConfirmIcon :size="24" />
 				</button>
 			</div>
 			<div v-show="createNewDeckVisibility" class="input-wrapper">
