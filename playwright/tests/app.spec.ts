@@ -113,7 +113,7 @@ test("create and review speedster deck", async ({ createUser, page }) => {
 
 	// Card 1: The Flash
 	await expect(cardText).toHaveText("The Flash");
-	await page.locator(".flip-button").click();
+	await cardText.click();
 	// Only check the first attribute for now
 	await expect(cardText).toHaveText("Barry Allen");
 
@@ -121,7 +121,7 @@ test("create and review speedster deck", async ({ createUser, page }) => {
 
 	// Card 2: Reverse-Flash
 	await expect(cardText).toHaveText("Reverse-Flash");
-	await page.locator(".flip-button").click();
+	await cardText.click();
 	// Only check the first attribute for now
 	await expect(cardText).toHaveText("Eobard Thawne");
 
