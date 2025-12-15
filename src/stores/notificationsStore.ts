@@ -1,6 +1,17 @@
 import { reactive } from "vue";
 
-const DISMISS_TIMEOUT = 5000;
+const DEFAULT_DISMISS_TIMEOUT = 5000;
+
+function getDismissTimeout() {
+	const raw = import.meta.env.VITE_NOTIFICATION_DISMISS_TIMEOUT;
+
+	if (!raw) return DEFAULT_DISMISS_TIMEOUT;
+
+	const parsed = Number(raw);
+	return Number.isFinite(parsed) ? parsed : DEFAULT_DISMISS_TIMEOUT;
+}
+
+const DISMISS_TIMEOUT = getDismissTimeout();
 let id = 0;
 
 type Notification = {
