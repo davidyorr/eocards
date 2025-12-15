@@ -84,6 +84,38 @@ test("create and review speedster deck", async ({ createUser, page }) => {
 		page.locator(".notification", { hasText: "Saved Deck" }),
 	).toHaveCount(1);
 
+	// wait for notification to disappear
+	await expect(
+		page.locator(".notification", { hasText: "Saved Deck" }),
+	).toHaveCount(0);
+
+	// --- ADD THIRD CARD ---
+	await page.getByRole("button", { name: "New Card" }).click();
+
+	// --- FILL CARD 3 (Wally West) ---
+	parent = page.locator(".input-container").filter({ has: frontLabel }).nth(2);
+	await parent.getByRole("textbox").fill("Kid Flash");
+
+	parent = page
+		.locator(".input-container")
+		.filter({ has: identityLabel })
+		.nth(2);
+	await parent.getByRole("textbox").fill("Wally West");
+
+	parent = page.locator(".input-container").filter({ has: colorLabel }).nth(2);
+	await parent.getByRole("textbox").fill("Yellow");
+
+	// save deck and cards again
+	await page.getByRole("button", { name: "Save Deck" }).click();
+	await expect(
+		page.locator(".notification", { hasText: "Saved Deck" }),
+	).toHaveCount(1);
+
+	// wait for notification to disappear
+	await expect(
+		page.locator(".notification", { hasText: "Saved Deck" }),
+	).toHaveCount(0);
+
 	// check that the deck name input has the correct initial value before editing
 	await expect(page.getByLabel("Deck Name:")).toHaveValue("Speedsters");
 
@@ -124,6 +156,14 @@ test("create and review speedster deck", async ({ createUser, page }) => {
 	await cardText.click();
 	// Only check the first attribute for now
 	await expect(cardText).toHaveText("Eobard Thawne");
+
+	await page.locator(".next-button").click();
+
+	// Card 3: Kid Flash
+	await expect(cardText).toHaveText("Kid Flash");
+	await cardText.click();
+	// Only check the first attribute for now
+	await expect(cardText).toHaveText("Wally West");
 
 	// Cycle back to start
 	await page.locator(".next-button").click();

@@ -194,15 +194,23 @@ async function saveDeck() {
 			}
 		});
 
-		// then handle attributes for newly created cards
+		// Handle attributes for newly created cards and sync local state with database response
 		if (savedCards) {
-			// map the original cards to the saved cards to find corresponding IDs
+			// Map the original cards to the saved cards to find corresponding IDs
 			cardsToUpsert.forEach((originalCard, index) => {
 				if (originalCard.id < 0) {
-					// get the equivalent card that was saved
+					// Get the equivalent card that was saved (matching by index)
 					const savedCard = savedCards[index];
 
-					if (savedCard && tempIdToAttributesMap.has(originalCard.id)) {
+					if (!savedCard) {
+						console.warn(
+							`No saved card found for temporary card ID ${originalCard.id}`,
+						);
+						return;
+					}
+
+					// Handle attributes for this newly created card
+					if (tempIdToAttributesMap.has(originalCard.id)) {
 						const attributesForThisCard = tempIdToAttributesMap.get(
 							originalCard.id,
 						);
@@ -217,7 +225,7 @@ async function saveDeck() {
 							} = attribute;
 							/* eslint-enable @typescript-eslint/no-unused-vars */
 
-							// use the card_id from the saved card version of the card
+							// Use the real card_id from the database response
 							attributesToSave.push({
 								...attributeWithoutId,
 								card_id: savedCard.id,
@@ -225,16 +233,15 @@ async function saveDeck() {
 						});
 					}
 
-					// update the local state with the new real ID from the database
-					if (savedCard) {
-						originalCard.id = savedCard.id;
-						// ensure local attributes know about the new positive card ID to prevent
-						// potential issues if you edit attributes immediately after saving
-						if (originalCard.card_attribute_value) {
-							originalCard.card_attribute_value.forEach((attr) => {
-								attr.card_id = savedCard.id;
-							});
-						}
+					// Replace the local card with the database version to get all server-managed fields
+					Object.assign(originalCard, savedCard);
+
+					// Update all local attributes to reference the new positive card ID
+					// This prevents issues if attributes are edited immediately after saving
+					if (originalCard.card_attribute_value) {
+						originalCard.card_attribute_value.forEach((attr) => {
+							attr.card_id = savedCard.id;
+						});
 					}
 				}
 			});
