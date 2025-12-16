@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Database } from "@/database.types";
 import { supabase } from "../../utils/supabase";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
 import { useDeck } from "./useDeck";
 import { notificationsStore } from "@/stores/notificationsStore";
-import { TrashIcon } from "lucide-vue-next";
+import { TrashIcon, PlusIcon, SettingsIcon, SaveIcon } from "lucide-vue-next";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -27,10 +27,24 @@ const { cards: editedCards } = useCards(deckId);
 
 const cardsToDelete = ref<Array<number>>([]);
 
+const selectedCardId = ref<number | null>(null);
+const showSettings = ref(false);
+
 const visibleCards = computed(() => {
 	return editedCards.value.filter(
 		(card) => !cardsToDelete.value.includes(card.id),
 	);
+});
+
+const selectedCard = computed(() => {
+	return visibleCards.value.find((c) => c.id === selectedCardId.value);
+});
+
+// Auto-select first card when data loads
+watch(visibleCards, (newCards) => {
+	if (selectedCardId.value === null && newCards.length > 0) {
+		selectedCardId.value = newCards[0].id;
+	}
 });
 
 onMounted(() => {
@@ -199,6 +213,8 @@ async function saveDeck() {
 			// Map the original cards to the saved cards to find corresponding IDs
 			cardsToUpsert.forEach((originalCard, index) => {
 				if (originalCard.id < 0) {
+					// Capture temp ID before mutation
+					const tempId = originalCard.id;
 					// Get the equivalent card that was saved (matching by index)
 					const savedCard = savedCards[index];
 
@@ -231,6 +247,11 @@ async function saveDeck() {
 								card_id: savedCard.id,
 							});
 						});
+					}
+
+					// Update selection if we just saved the currently selected new card
+					if (selectedCardId.value === tempId) {
+						selectedCardId.value = savedCard.id;
 					}
 
 					// Replace the local card with the database version to get all server-managed fields
@@ -332,6 +353,15 @@ function handleNewCardClick() {
 		display_order: editedCards.value.length,
 		card_attribute_value: cardAttributeValues,
 	});
+
+	// Select the new card immediately
+	selectedCardId.value = cardId;
+
+	// Scroll the sidebar to bottom
+	nextTick(() => {
+		const sidebar = document.querySelector(".slides-sidebar");
+		if (sidebar) sidebar.scrollTop = sidebar.scrollHeight;
+	});
 }
 
 function handleSaveClick() {
@@ -339,6 +369,10 @@ function handleSaveClick() {
 }
 
 function handleRemoveCardClick(cardId: number) {
+	// Determine if we are deleting the currently selected card
+	const isSelected = selectedCardId.value === cardId;
+	const currentIndex = visibleCards.value.findIndex((c) => c.id === cardId);
+
 	if (cardId < 0) {
 		// this is a new, unsaved card, so we can just remove it from the local list
 		editedCards.value = editedCards.value.filter((c) => c.id !== cardId);
@@ -346,127 +380,377 @@ function handleRemoveCardClick(cardId: number) {
 		// this is an existing card, so we need to mark it for deletion on the next save
 		cardsToDelete.value.push(cardId);
 	}
+
+	// Update selection logic: move to previous card, or next if at start
+	if (isSelected) {
+		// Wait for computed property to update
+		nextTick(() => {
+			if (visibleCards.value.length === 0) {
+				selectedCardId.value = null;
+			} else {
+				// Try to go to the card at the same index (which is now the "next" card), or the one before it
+				const newIndex = Math.min(currentIndex, visibleCards.value.length - 1);
+				selectedCardId.value = visibleCards.value[newIndex].id;
+			}
+		});
+	}
 }
 </script>
 
 <template>
-	<div class="content" v-if="deck">
-		<h1>Deck Editor</h1>
-		<div class="deck-settings">
-			<label>
-				Deck Name:
-				<input v-model="deck.name" />
-			</label>
-			<!-- <label>
-				Description:
-				<textarea v-model="deck.description"></textarea>
-			</label> -->
-		</div>
-		<h2>Attributes</h2>
-		<div>
-			<input v-model="newAttributeName" placeholder="name" />
-			<select v-model="newAttributeType">
-				<option
-					v-for="attributeTypeOption in attributeTypeOptions"
-					:key="attributeTypeOption"
-				>
-					{{ attributeTypeOption }}
-				</option>
-			</select>
-			<button @click="handleAddAttributeClick">Add Attribute</button>
-		</div>
-		<div class="attributes-container">
-			<div v-for="deckAttribute in deckAttributes" :key="deckAttribute.id">
-				{{ deckAttribute.attribute_name }} - {{ deckAttribute.attribute_type }}
-			</div>
-		</div>
-		<h2>Cards</h2>
-		<button @click="handleSaveClick">Save Deck</button>
-		<div class="cards">
-			<div v-for="card in visibleCards" :key="card.id" class="card">
+	<div class="slides-layout" v-if="deck">
+		<!-- LEFT SIDEBAR: Slides/Cards List -->
+		<aside class="slides-sidebar">
+			<div class="sidebar-header">
+				<hgroup>
+					<h3 class="deck-title">{{ deck.name }}</h3>
+					<small>{{ visibleCards.length }} cards</small>
+				</hgroup>
 				<button
-					class="remove-card-button"
-					@click="handleRemoveCardClick(card.id)"
+					class="icon-only outline"
+					@click="showSettings = !showSettings"
+					data-tooltip="Deck Settings"
 				>
-					<TrashIcon :size="24" />
+					<SettingsIcon :size="20" />
 				</button>
-				<div class="input-container">
-					<label>Front</label>
-					<textarea
-						class="front-content"
-						v-model="card.front_content"
-					></textarea>
-				</div>
-				<template
-					v-for="attribute in card.card_attribute_value"
-					:key="attribute?.id"
-				>
-					<div class="input-container">
-						<label>{{ attribute?.deck_attribute_type.attribute_name }}</label>
-						<textarea v-model="attribute.value"></textarea>
-					</div>
-				</template>
 			</div>
-			<button @click="handleNewCardClick">New Card</button>
-		</div>
+
+			<div class="cards-list">
+				<div
+					v-for="(card, index) in visibleCards"
+					:key="card.id"
+					class="slide-thumbnail"
+					:class="{ active: selectedCardId === card.id }"
+					@click="selectedCardId = card.id"
+				>
+					<span class="slide-number">{{ index + 1 }}</span>
+					<div class="slide-preview">
+						<div class="preview-content">{{ card.front_content }}</div>
+					</div>
+					<button
+						class="delete-btn"
+						@click.stop="handleRemoveCardClick(card.id)"
+					>
+						<TrashIcon :size="16" />
+					</button>
+				</div>
+			</div>
+
+			<div class="sidebar-footer">
+				<button @click="handleNewCardClick" class="outline contrast full-width">
+					<PlusIcon :size="18" /> New Card
+				</button>
+			</div>
+		</aside>
+
+		<!-- RIGHT MAIN: Editor Canvas -->
+		<main class="slides-editor">
+			<!-- Global Toolbar (Always Visible) -->
+			<div class="editor-toolbar">
+				<button @click="handleSaveClick" class="save-button">
+					<SaveIcon :size="18" /> Save Deck
+				</button>
+			</div>
+
+			<!-- Deck Settings Overlay/Panel -->
+			<article v-if="showSettings" class="settings-panel">
+				<header>
+					<strong>Deck Settings</strong>
+					<button class="close-btn" @click="showSettings = false">✕</button>
+				</header>
+				<label>
+					Deck Name
+					<input v-model="deck.name" />
+				</label>
+
+				<hr />
+
+				<h6>Attributes</h6>
+				<div class="grid">
+					<input v-model="newAttributeName" placeholder="New attribute name" />
+					<select v-model="newAttributeType">
+						<option
+							v-for="attributeTypeOption in attributeTypeOptions"
+							:key="attributeTypeOption"
+						>
+							{{ attributeTypeOption }}
+						</option>
+					</select>
+					<button @click="handleAddAttributeClick" class="outline">Add</button>
+				</div>
+				<div class="tags">
+					<span
+						v-for="deckAttribute in deckAttributes"
+						:key="deckAttribute.id"
+						class="tag"
+					>
+						{{ deckAttribute.attribute_name }}
+					</span>
+				</div>
+			</article>
+
+			<!-- Active Card Editor -->
+			<div v-if="selectedCard" class="editor-container">
+				<article class="card-form">
+					<label>
+						Front Content
+						<textarea
+							class="front-content-input"
+							v-model="selectedCard.front_content"
+							rows="4"
+							placeholder="Type the front of the card here..."
+						></textarea>
+					</label>
+
+					<!-- Attributes Loop -->
+					<div class="attributes-grid">
+						<template
+							v-for="attribute in selectedCard.card_attribute_value"
+							:key="attribute?.id"
+						>
+							<label>
+								{{ attribute?.deck_attribute_type.attribute_name }}
+								<textarea v-model="attribute.value" rows="2"></textarea>
+							</label>
+						</template>
+					</div>
+				</article>
+			</div>
+
+			<div v-else class="empty-state">
+				<article>
+					<header>No Card Selected</header>
+					<p>Select a card from the left sidebar or create a new one.</p>
+					<button @click="handleNewCardClick">Create First Card</button>
+				</article>
+			</div>
+		</main>
 	</div>
 </template>
 
 <style scoped>
-.content {
+/* Layout Container */
+.slides-layout {
+	display: flex;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	background-color: var(--pico-background-color);
+}
+
+/* --- Left Sidebar --- */
+.slides-sidebar {
+	width: 280px;
+	flex-shrink: 0;
+	background-color: var(--pico-card-background-color);
+	border-right: 1px solid var(--pico-muted-border-color);
 	display: flex;
 	flex-direction: column;
+	height: 100%;
+}
+
+.sidebar-header {
+	padding: 1rem;
+	border-bottom: 1px solid var(--pico-muted-border-color);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.sidebar-header hgroup {
+	margin-bottom: 0;
+}
+
+.deck-title {
+	font-size: 1rem;
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 160px;
+}
+
+.cards-list {
+	flex: 1;
+	overflow-y: auto;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.sidebar-footer {
+	padding: 1rem;
+	border-top: 1px solid var(--pico-muted-border-color);
+}
+
+/* Thumbnail Items */
+.slide-thumbnail {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+	position: relative;
+	padding: 4px;
+	border-radius: var(--pico-border-radius);
+	transition: background-color 0.2s;
+}
+
+.slide-thumbnail:hover {
+	background-color: var(--pico-muted-border-color);
+}
+
+.slide-thumbnail.active {
+	background-color: var(--pico-primary-background);
+}
+
+.slide-thumbnail.active .slide-preview {
+	border: 2px solid var(--pico-primary);
+}
+
+.slide-number {
+	font-size: 0.8rem;
+	color: var(--pico-muted-color);
+	width: 20px;
+	text-align: right;
+}
+
+.slide-preview {
+	flex: 1;
+	height: 50px;
+	background-color: var(--pico-background-color);
+	border: 1px solid var(--pico-muted-border-color);
+	border-radius: 4px;
+	padding: 4px;
+	overflow: hidden;
+	font-size: 0.7rem;
+	color: var(--pico-color);
+}
+
+.preview-content {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.delete-btn {
+	padding: 0;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
 	justify-content: center;
+	background: transparent;
+	border: none;
+	color: var(--pico-muted-color);
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.delete-btn:hover {
+	color: var(--pico-color);
+	background: transparent;
+}
+
+.slide-thumbnail:hover .delete-btn {
+	opacity: 1;
+}
+
+/* --- Right Main Editor --- */
+.slides-editor {
+	flex: 1;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	padding: 1rem 2rem;
+}
+
+.editor-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 1rem;
+	flex-shrink: 0; /* Don't shrink when scrolling */
+}
+
+.card-form {
+	max-width: 800px;
 	margin: 0 auto;
-	gap: 16px;
+	width: 100%;
+}
 
-	.cards {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		grid-gap: 16px;
-		grid-auto-flow: dense;
+.front-content-input {
+	font-size: 1.25rem;
+	min-height: 120px;
+}
 
-		.card {
-			position: relative;
-			box-shadow: rgba(100, 100, 111, 0.2) 0px 0px 6px 0px;
-			padding: 12px;
+.attributes-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+	margin-top: 1rem;
+	border-top: 1px dashed var(--pico-muted-border-color);
+	padding-top: 1rem;
+}
 
-			.input-container {
-				display: flex;
-				flex-direction: column;
-			}
-
-			.input-container:not(:last-child) {
-				margin-bottom: 8px;
-			}
-
-			label {
-				display: inline-block;
-				align-self: center;
-			}
-
-			textarea {
-				margin-left: 4px;
-				resize: none;
-			}
-		}
-
-		.remove-card-button {
-			position: absolute;
-			top: 2px;
-			right: 2px;
-
-			width: auto;
-			background: none;
-			border: none;
-			padding: 0.25rem;
-			color: var(--secondary);
-		}
+@media (min-width: 992px) {
+	.attributes-grid {
+		grid-template-columns: 1fr 1fr;
 	}
+}
 
-	button {
-		width: 256px;
-		cursor: pointer;
-	}
+/* Settings Panel */
+.settings-panel {
+	margin-bottom: 2rem;
+	border: 1px solid var(--pico-primary);
+}
+
+.settings-panel header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.close-btn {
+	background: transparent;
+	border: none;
+	padding: 0;
+	width: auto;
+	color: var(--pico-muted-color);
+}
+
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+
+.tag {
+	background-color: var(--pico-card-background-color);
+	border: 1px solid var(--pico-muted-border-color);
+	padding: 0.25rem 0.5rem;
+	border-radius: var(--pico-border-radius);
+	font-size: 0.8rem;
+}
+
+/* Utilities */
+.full-width {
+	width: 100%;
+}
+
+.icon-only {
+	padding: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.empty-state {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
 }
 </style>

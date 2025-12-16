@@ -20,63 +20,54 @@ test("create and review speedster deck", async ({ createUser, page }) => {
 
 	// navigate to the edit page
 	await expect(page).toHaveURL(/http:\/\/localhost:8080\/deck\/edit\/[0-9]+/);
-	await expect(page.getByText("Deck Editor")).toBeVisible();
+	// The "Deck Editor" H1 is gone, but the deck title is visible in the sidebar
+	await expect(page.locator(".deck-title")).toHaveText("Speedsters");
 
 	// --- ADD ATTRIBUTES ---
+	// In the new layout, we must open the settings panel first
+	await page.locator('button[data-tooltip="Deck Settings"]').click();
+	await expect(page.locator(".settings-panel")).toBeVisible();
 
 	// Attribute 1: Secret Identity (This will be visible in Review)
-	await page.getByPlaceholder("name").fill("Secret Identity");
-	await page.getByRole("button", { name: "Add Attribute" }).click();
+	await page.getByPlaceholder("New attribute name").fill("Secret Identity");
+	await page.getByRole("button", { name: "Add" }).click();
+
+	// FIX: Wait for the first attribute to appear. This ensures the add operation finished
+	// and the input field has been cleared by the app before we type the next one.
+	await expect(page.locator(".tags")).toContainText("Secret Identity");
 
 	// Attribute 2: Lightning Color (We save this, but don't check it in Review yet)
-	await page.getByPlaceholder("name").fill("Lightning Color");
-	await page.getByRole("button", { name: "Add Attribute" }).click();
+	await page.getByPlaceholder("New attribute name").fill("Lightning Color");
+	await page.getByRole("button", { name: "Add" }).click();
 
 	// Check that attributes are listed in the editor
-	await expect(page.locator(".attributes-container")).toContainText(
-		"Secret Identity - text",
-	);
-	await expect(page.locator(".attributes-container")).toContainText(
-		"Lightning Color - text",
-	);
+	await expect(page.locator(".tags")).toContainText("Lightning Color");
+
+	// Close settings to clear the view for the editor
+	await page.locator(".close-btn").click();
 
 	// --- ADD CARDS ---
-	await page.getByRole("button", { name: "New Card" }).click();
-	await page.getByRole("button", { name: "New Card" }).click();
-
-	// Helper labels for locating inputs
-	const frontLabel = page.locator("label", { hasText: "Front" });
-	const identityLabel = page.locator("label", { hasText: "Secret Identity" });
-	const colorLabel = page.locator("label", { hasText: "Lightning Color" });
+	// Add two cards. Note: New layout auto-selects the *newest* card.
+	await page.getByRole("button", { name: "New Card" }).click(); // Creates Card 1
+	await page.getByRole("button", { name: "New Card" }).click(); // Creates Card 2
 
 	// --- FILL CARD 1 (The Flash) ---
-	let parent = page
-		.locator(".input-container")
-		.filter({ has: frontLabel })
-		.nth(0);
-	await parent.getByRole("textbox").fill("The Flash");
+	// In the new layout, only one card is editable at a time.
+	// We are currently on Card 2 (auto-selected). We must click Card 1 in the sidebar.
+	await page.locator(".slide-thumbnail").first().click();
 
-	parent = page
-		.locator(".input-container")
-		.filter({ has: identityLabel })
-		.nth(0);
-	await parent.getByRole("textbox").fill("Barry Allen");
-
-	parent = page.locator(".input-container").filter({ has: colorLabel }).nth(0);
-	await parent.getByRole("textbox").fill("Yellow");
+	// Helper labels are now used directly via getByLabel since the form is cleaner
+	await page.getByLabel("Front Content").fill("The Flash");
+	await page.getByLabel("Secret Identity").fill("Barry Allen");
+	await page.getByLabel("Lightning Color").fill("Yellow");
 
 	// --- FILL CARD 2 (Reverse-Flash) ---
-	parent = page.locator(".input-container").filter({ has: frontLabel }).nth(1);
-	await parent.getByRole("textbox").fill("Reverse-Flash");
+	// Click the second thumbnail to edit Card 2
+	await page.locator(".slide-thumbnail").nth(1).click();
 
-	parent = page
-		.locator(".input-container")
-		.filter({ has: identityLabel })
-		.nth(1);
-	await parent.getByRole("textbox").fill("Eobard Thawne");
-
-	parent = page.locator(".input-container").filter({ has: colorLabel }).nth(1);
-	await parent.getByRole("textbox").fill("Red");
+	await page.getByLabel("Front Content").fill("Reverse-Flash");
+	await page.getByLabel("Secret Identity").fill("Eobard Thawne");
+	await page.getByLabel("Lightning Color").fill("Red");
 
 	// save deck and cards
 	await page.getByRole("button", { name: "Save Deck" }).click();
@@ -90,20 +81,13 @@ test("create and review speedster deck", async ({ createUser, page }) => {
 	).toHaveCount(0);
 
 	// --- ADD THIRD CARD ---
+	// Clicking this auto-selects the new 3rd card
 	await page.getByRole("button", { name: "New Card" }).click();
 
 	// --- FILL CARD 3 (Wally West) ---
-	parent = page.locator(".input-container").filter({ has: frontLabel }).nth(2);
-	await parent.getByRole("textbox").fill("Kid Flash");
-
-	parent = page
-		.locator(".input-container")
-		.filter({ has: identityLabel })
-		.nth(2);
-	await parent.getByRole("textbox").fill("Wally West");
-
-	parent = page.locator(".input-container").filter({ has: colorLabel }).nth(2);
-	await parent.getByRole("textbox").fill("Yellow");
+	await page.getByLabel("Front Content").fill("Kid Flash");
+	await page.getByLabel("Secret Identity").fill("Wally West");
+	await page.getByLabel("Lightning Color").fill("Yellow");
 
 	// save deck and cards again
 	await page.getByRole("button", { name: "Save Deck" }).click();
@@ -117,10 +101,14 @@ test("create and review speedster deck", async ({ createUser, page }) => {
 	).toHaveCount(0);
 
 	// check that the deck name input has the correct initial value before editing
-	await expect(page.getByLabel("Deck Name:")).toHaveValue("Speedsters");
+	// Need to open settings again
+	await page.locator('button[data-tooltip="Deck Settings"]').click();
+	await expect(page.getByLabel("Deck Name")).toHaveValue("Speedsters");
 
 	// edit the deck name
-	await page.getByLabel("Deck Name:").fill("Speedsters of Central City");
+	await page.getByLabel("Deck Name").fill("Speedsters of Central City");
+	// Close settings - the main "Save Deck" button handles the actual saving of the name
+	await page.locator(".close-btn").click();
 	await page.getByRole("button", { name: "Save Deck" }).click();
 
 	// navigate back to the dashboard to verify the name change
