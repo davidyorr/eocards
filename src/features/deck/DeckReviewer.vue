@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
+import { reviewOptionsStore } from "@/stores/reviewOptionsStore";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -10,12 +11,52 @@ const currentCardIndex = ref(0);
 // -1 = front, 0..N-1 = attribute index
 const attributeIndex = ref(-1);
 const showEmptyCardContent = ref(false);
+const cardOrder = ref<number[]>([]);
+
+function buildCardOrder() {
+	const indices = cards.value.map((_, i) => i);
+	if (reviewOptionsStore.shuffle) {
+		// Fisher-Yates shuffle
+		for (let i = indices.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[indices[i], indices[j]] = [indices[j], indices[i]];
+		}
+	}
+	cardOrder.value = indices;
+}
+
+function resetToStart() {
+	currentCardIndex.value = 0;
+	attributeIndex.value = -1;
+}
+
+// rebuild order when cards first load
+watch(
+	cards,
+	(newCards) => {
+		if (newCards.length > 0 && cardOrder.value.length === 0) {
+			buildCardOrder();
+		}
+	},
+	{ immediate: true },
+);
+
+// rebuild and reset when shuffle option is applied
+watch(
+	() => reviewOptionsStore.shuffle,
+	() => {
+		buildCardOrder();
+		resetToStart();
+	},
+);
 
 const progressText = computed(() => {
 	return `${currentCardIndex.value + 1} / ${cards.value.length}`;
 });
 
-const currentCard = computed(() => cards.value[currentCardIndex.value]);
+const currentCard = computed(
+	() => cards.value[cardOrder.value[currentCardIndex.value]],
+);
 
 const currentContent = computed(() => {
 	if (attributeIndex.value === -1)
@@ -48,12 +89,12 @@ onMounted(() => {
 	}, 500);
 });
 
-function resetCard() {
+function resetFlip() {
 	attributeIndex.value = -1;
 }
 
 function handlePreviousClick() {
-	resetCard();
+	resetFlip();
 	currentCardIndex.value =
 		currentCardIndex.value === 0
 			? cards.value.length - 1
@@ -61,7 +102,7 @@ function handlePreviousClick() {
 }
 
 function handleNextClick() {
-	resetCard();
+	resetFlip();
 	currentCardIndex.value =
 		currentCardIndex.value === cards.value.length - 1
 			? 0

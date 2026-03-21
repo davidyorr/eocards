@@ -7,14 +7,17 @@ import {
 	EditIcon,
 	PlayCircleIcon as ReviewIcon,
 	SettingsIcon,
+	SlidersHorizontalIcon,
 	LogOutIcon,
 } from "lucide-vue-next";
 import { ref } from "vue";
 import { supabase } from "@/utils/supabase";
 import { useRoute, useRouter } from "vue-router";
+import ReviewOptions from "../deck/ReviewOptions.vue";
 
 const userOptionsMenuVisibility = ref(false);
 const userSettingsModalVisibility = ref(false);
+const reviewOptionsModalVisibility = ref(false);
 
 const route = useRoute();
 const router = useRouter();
@@ -51,6 +54,14 @@ function handleEditIconClick() {
 function handleReviewIconClick() {
 	router.push(`/deck/review/${route.params.id}`);
 }
+
+function handleReviewOptionsClick() {
+	reviewOptionsModalVisibility.value = true;
+}
+
+function handleReviewOptionsClose() {
+	reviewOptionsModalVisibility.value = false;
+}
 </script>
 
 <template>
@@ -66,6 +77,12 @@ function handleReviewIconClick() {
 			:size="24"
 			color="var(--primary)"
 			@click="handleEditIconClick"
+		/>
+		<SlidersHorizontalIcon
+			v-if="$route.path.includes('/deck/review')"
+			:size="24"
+			color="var(--primary)"
+			@click="handleReviewOptionsClick"
 		/>
 		<ReviewIcon
 			v-if="$route.path.includes('/deck/edit')"
@@ -92,6 +109,10 @@ function handleReviewIconClick() {
 			</div>
 		</div>
 		<Settings v-if="userSettingsModalVisibility" @close="handleSettingsClose" />
+		<ReviewOptions
+			v-if="reviewOptionsModalVisibility"
+			@close="handleReviewOptionsClose"
+		/>
 	</nav>
 </template>
 
