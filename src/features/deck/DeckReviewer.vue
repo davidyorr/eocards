@@ -7,11 +7,39 @@ const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
 const { cards, loading } = useCards(deckId);
 const currentCardIndex = ref(0);
-const viewingFront = ref(true);
-// delay showing empty card content to avoid flicker on fast loads
+// -1 = front, 0..N-1 = attribute index
+const attributeIndex = ref(-1);
 const showEmptyCardContent = ref(false);
+
 const progressText = computed(() => {
 	return `${currentCardIndex.value + 1} / ${cards.value.length}`;
+});
+
+const currentCard = computed(() => cards.value[currentCardIndex.value]);
+
+const currentContent = computed(() => {
+	if (attributeIndex.value === -1)
+		return currentCard.value?.front_content ?? "";
+	return (
+		currentCard.value?.card_attribute_value[attributeIndex.value]?.value ?? ""
+	);
+});
+
+const currentAttributeName = computed(() => {
+	if (attributeIndex.value === -1) return "Front";
+	return (
+		currentCard.value?.card_attribute_value[attributeIndex.value]
+			?.deck_attribute_type?.attribute_name ?? null
+	);
+});
+
+// e.g. "● ○ ○" dots showing front + each attribute
+const flipDots = computed(() => {
+	if (!currentCard.value) return "";
+	const total = 1 + currentCard.value.card_attribute_value.length;
+	return Array.from({ length: total }, (_, i) =>
+		i === attributeIndex.value + 1 ? "●" : "○",
+	).join(" ");
 });
 
 onMounted(() => {
@@ -20,33 +48,36 @@ onMounted(() => {
 	}, 500);
 });
 
-function handlePreviousClick() {
-	viewingFront.value = true;
+function resetCard() {
+	attributeIndex.value = -1;
+}
 
-	if (currentCardIndex.value === 0) {
-		currentCardIndex.value = cards.value.length - 1;
-	} else {
-		currentCardIndex.value = currentCardIndex.value - 1;
-	}
+function handlePreviousClick() {
+	resetCard();
+	currentCardIndex.value =
+		currentCardIndex.value === 0
+			? cards.value.length - 1
+			: currentCardIndex.value - 1;
 }
 
 function handleNextClick() {
-	viewingFront.value = true;
-
-	if (currentCardIndex.value === cards.value.length - 1) {
-		currentCardIndex.value = 0;
-	} else {
-		currentCardIndex.value = currentCardIndex.value + 1;
-	}
+	resetCard();
+	currentCardIndex.value =
+		currentCardIndex.value === cards.value.length - 1
+			? 0
+			: currentCardIndex.value + 1;
 }
 
 function handleFlipClick() {
-	viewingFront.value = !viewingFront.value;
+	if (!currentCard.value) return;
+	const attrCount = currentCard.value.card_attribute_value.length;
+	// cycle: front (-1) → attr 0 → attr 1 → … → attr N-1 → front (-1)
+	attributeIndex.value =
+		attributeIndex.value < attrCount - 1 ? attributeIndex.value + 1 : -1;
 }
 </script>
 
 <template>
-	<!-- if there are cards, always show them immediately -->
 	<div class="cards" v-if="cards.length > 0">
 		<article class="card-content">
 			<span class="progress-indicator">{{ progressText }}</span>
@@ -54,25 +85,25 @@ function handleFlipClick() {
 				<div class="prev-button" @click.stop="handlePreviousClick"></div>
 				<div class="next-button" @click.stop="handleNextClick"></div>
 			</div>
+
 			<div
 				class="main-content"
 				data-testid="card-text"
 				@click="handleFlipClick"
 			>
-				{{
-					viewingFront
-						? cards[currentCardIndex].front_content
-						: cards[currentCardIndex].card_attribute_value[0].value
-				}}
+				{{ currentContent }}
+			</div>
+
+			<span class="flip-dots">{{ flipDots }}</span>
+			<div class="attribute-label" v-if="currentAttributeName">
+				{{ currentAttributeName }}
 			</div>
 		</article>
 	</div>
 
-	<!-- otherwise show the empty card container -->
 	<div class="empty-card-container" v-else>
 		<article class="card-content">
 			<div class="main-content">
-				<!-- if the delay has passed, show either the loader or the no cards message -->
 				<div class="loader" v-if="showEmptyCardContent && loading"></div>
 				<div v-else-if="showEmptyCardContent && !loading">
 					No cards in this deck.
@@ -114,7 +145,6 @@ function handleFlipClick() {
 		height: 80%;
 		width: 100%;
 		align-content: center;
-
 		border-radius: 16px;
 
 		.main-content {
@@ -138,6 +168,33 @@ function handleFlipClick() {
 			pointer-events: none;
 		}
 
+		.flip-dots {
+			position: absolute;
+			/* top: 0; */
+			bottom: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 0.7rem;
+			letter-spacing: 0.2em;
+			padding: 0.5rem;
+			pointer-events: none;
+			color: var(--pico-muted-color, currentColor);
+			opacity: 0.5;
+		}
+
+		.attribute-label {
+			position: absolute;
+			bottom: 1rem;
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 1rem;
+			text-align: center;
+			padding: 0.75rem;
+			pointer-events: none;
+			opacity: 0.55;
+			white-space: nowrap;
+		}
+
 		.controls {
 			position: absolute;
 			display: flex;
@@ -146,7 +203,6 @@ function handleFlipClick() {
 			height: 100%;
 			top: 0;
 			left: 0;
-
 			pointer-events: none;
 
 			.prev-button,
