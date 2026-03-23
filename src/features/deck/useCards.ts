@@ -37,7 +37,7 @@ export function useCards(deckId: number) {
 					`,
 				)
 				.eq("deck_id", deckId)
-				.order("display_order");
+				.order("display_order", { ascending: true });
 			loading.value = false;
 
 			if (error) {

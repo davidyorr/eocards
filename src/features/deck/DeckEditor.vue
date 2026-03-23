@@ -6,7 +6,14 @@ import { useRoute } from "vue-router";
 import { useCards } from "./useCards";
 import { useDeck } from "./useDeck";
 import { notificationsStore } from "@/stores/notificationsStore";
-import { TrashIcon, PlusIcon, SettingsIcon, SaveIcon } from "lucide-vue-next";
+import {
+	TrashIcon,
+	PlusIcon,
+	SettingsIcon,
+	SaveIcon,
+	GripVerticalIcon,
+} from "lucide-vue-next";
+import draggable from "vuedraggable";
 
 const route = useRoute();
 const deckId = Number.parseInt(String(route.params.id));
@@ -29,6 +36,23 @@ const cardsToDelete = ref<Array<number>>([]);
 
 const selectedCardId = ref<number | null>(null);
 const showSettings = ref(false);
+
+const draggableList = computed({
+	get: () => {
+		// Only show cards that are NOT marked for deletion
+		return editedCards.value.filter(
+			(card) => !cardsToDelete.value.includes(card.id),
+		);
+	},
+	set: (newList) => {
+		// When reordering happens, we need to update the main 'editedCards' array
+		// while keeping the "hidden" (deleted) cards tucked away at the end.
+		const deletedCards = editedCards.value.filter((card) =>
+			cardsToDelete.value.includes(card.id),
+		);
+		editedCards.value = [...newList, ...deletedCards];
+	},
+});
 
 const visibleCards = computed(() => {
 	return editedCards.value.filter(
@@ -83,6 +107,11 @@ async function saveDeck() {
 	if (Number.isNaN(deckId)) {
 		return;
 	}
+
+	// Update the display_order of every visible card based on its current array position
+	visibleCards.value.forEach((card, index) => {
+		card.display_order = index;
+	});
 
 	try {
 		// save deck changes
@@ -423,26 +452,40 @@ function handleRemoveCardClick(cardId: number) {
 				</button>
 			</div>
 
-			<div class="cards-list">
-				<div
-					v-for="(card, index) in visibleCards"
-					:key="card.id"
-					class="slide-thumbnail"
-					:class="{ active: selectedCardId === card.id }"
-					@click="selectedCardId = card.id"
-				>
-					<span class="slide-number">{{ index + 1 }}</span>
-					<div class="slide-preview">
-						<div class="preview-content">{{ card.front_content }}</div>
-					</div>
-					<button
-						class="delete-btn"
-						@click.stop="handleRemoveCardClick(card.id)"
+			<draggable
+				v-model="draggableList"
+				item-key="id"
+				handle=".drag-handle"
+				ghost-class="drag-ghost"
+				tag="div"
+				class="cards-list"
+			>
+				<template #item="{ element: card, index }">
+					<div
+						class="slide-thumbnail"
+						:class="{ active: selectedCardId === card.id }"
+						@click="selectedCardId = card.id"
 					>
-						<TrashIcon :size="16" />
-					</button>
-				</div>
-			</div>
+						<!-- Drag Handle -->
+						<div class="drag-handle">
+							<GripVerticalIcon :size="14" />
+						</div>
+
+						<span class="slide-number">{{ index + 1 }}</span>
+
+						<div class="slide-preview">
+							<div class="preview-content">{{ card.front_content }}</div>
+						</div>
+
+						<button
+							class="delete-btn"
+							@click.stop="handleRemoveCardClick(card.id)"
+						>
+							<TrashIcon :size="16" />
+						</button>
+					</div>
+				</template>
+			</draggable>
 
 			<div class="sidebar-footer">
 				<button @click="handleNewCardClick" class="outline contrast full-width">
@@ -625,12 +668,17 @@ function handleRemoveCardClick(cardId: number) {
 .slide-thumbnail {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 0.25rem;
 	cursor: pointer;
 	position: relative;
 	padding: 4px;
 	border-radius: var(--pico-border-radius);
 	transition: background-color 0.2s;
+}
+
+/* Show handle clearly on hover */
+.slide-thumbnail:hover .drag-handle {
+	opacity: 1;
 }
 
 .slide-thumbnail:hover {
@@ -779,6 +827,31 @@ function handleRemoveCardClick(cardId: number) {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+	cursor: grab;
+	color: var(--pico-muted-color);
+	display: flex;
+	align-items: center;
+	opacity: 0.5;
+	transition: opacity 0.2s;
+}
+
+.drag-handle:hover {
+	opacity: 1;
+}
+
+.drag-handle:active {
+	cursor: grabbing;
+}
+
+/* The appearance of the item while it's being dragged */
+.drag-ghost {
+	opacity: 0.3;
+	background: var(--pico-primary-background) !important;
+	border: 2px dashed var(--pico-primary) !important;
 }
 
 /* --- Responsive Layout Logic --- */
