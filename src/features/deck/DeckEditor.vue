@@ -42,7 +42,11 @@ const selectedCard = computed(() => {
 
 // Auto-select first card when data loads
 watch(visibleCards, (newCards) => {
-	if (selectedCardId.value === null && newCards.length > 0) {
+	// On mobile, we might NOT want to auto-select,
+	// because it will immediately jump to the editor view
+	const isMobile = window.innerWidth <= 768;
+
+	if (!isMobile && selectedCardId.value === null && newCards.length > 0) {
 		selectedCardId.value = newCards[0].id;
 	}
 });
@@ -398,7 +402,11 @@ function handleRemoveCardClick(cardId: number) {
 </script>
 
 <template>
-	<div class="slides-layout" v-if="deck">
+	<div
+		class="slides-layout"
+		:class="{ 'card-selected': selectedCardId !== null }"
+		v-if="deck"
+	>
 		<!-- LEFT SIDEBAR: Slides/Cards List -->
 		<aside class="slides-sidebar">
 			<div class="sidebar-header">
@@ -447,6 +455,14 @@ function handleRemoveCardClick(cardId: number) {
 		<main class="slides-editor">
 			<!-- Global Toolbar (Always Visible) -->
 			<div class="editor-toolbar">
+				<!-- Only visible on mobile -->
+				<button
+					@click="selectedCardId = null"
+					class="outline secondary back-button mobile-only"
+				>
+					← Back to List
+				</button>
+
 				<button @click="handleSaveClick" class="save-button">
 					<SaveIcon :size="18" /> Save Deck
 				</button>
@@ -532,7 +548,7 @@ function handleRemoveCardClick(cardId: number) {
 /* Layout Container */
 .slides-layout {
 	display: flex;
-	height: 100%;
+	height: 100dvh; /* Use dynamic viewport height for mobile browsers */
 	width: 100%;
 	overflow: hidden;
 	background-color: var(--pico-background-color);
@@ -540,13 +556,34 @@ function handleRemoveCardClick(cardId: number) {
 
 /* --- Left Sidebar --- */
 .slides-sidebar {
-	width: 280px;
-	flex-shrink: 0;
 	background-color: var(--pico-card-background-color);
-	border-right: 1px solid var(--pico-muted-border-color);
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+}
+
+/* --- Right Main Editor --- */
+.slides-editor {
+	flex: 1;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	padding: 1rem 2rem;
+}
+
+@media (min-width: 769px) {
+	/* Only on desktop: Sidebar has a fixed width and a border on the right */
+	.slides-sidebar {
+		width: 280px;
+		flex-shrink: 0;
+		border-right: 1px solid var(--pico-muted-border-color);
+	}
+
+	/* Only on desktop: The editor is always visible */
+	.slides-editor {
+		display: flex;
+	}
 }
 
 .sidebar-header {
@@ -657,16 +694,6 @@ function handleRemoveCardClick(cardId: number) {
 	opacity: 1;
 }
 
-/* --- Right Main Editor --- */
-.slides-editor {
-	flex: 1;
-	position: relative;
-	display: flex;
-	flex-direction: column;
-	overflow-y: auto;
-	padding: 1rem 2rem;
-}
-
 .editor-toolbar {
 	display: flex;
 	justify-content: flex-end;
@@ -752,5 +779,58 @@ function handleRemoveCardClick(cardId: number) {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
+}
+
+/* --- Responsive Layout Logic --- */
+
+.mobile-only {
+	display: none;
+}
+
+@media (max-width: 768px) {
+	.mobile-only {
+		display: flex;
+	}
+
+	.slides-layout {
+		position: relative;
+	}
+
+	/* Hide the editor by default on mobile */
+	.slides-editor {
+		display: none;
+		padding: 1rem !important;
+	}
+
+	/* Hide the sidebar when a card is selected */
+	.slides-layout.card-selected .slides-sidebar {
+		display: none;
+	}
+
+	/* Show the editor when a card is selected */
+	.slides-layout.card-selected .slides-editor {
+		display: flex;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: var(--pico-background-color);
+		z-index: 10;
+	}
+
+	.slides-sidebar {
+		width: 100%; /* Take full width on mobile */
+		border-right: none;
+	}
+
+	.back-button {
+		margin-right: auto;
+		padding: 0.25rem 0.75rem;
+		font-size: 0.8rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 }
 </style>
