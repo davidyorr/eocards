@@ -355,11 +355,10 @@ async function handleAddAttributeClick() {
 
 let negativeId = -1;
 
-function handleNewCardClick() {
+function createCard(insertAt: number) {
 	// use negative numbers to differentiate from cards that have been saved.
 	// those cards will have a generated id which will be positive
 	const cardId = -performance.now();
-	console.log("new card", cardId);
 
 	const cardAttributeValues = deckAttributes.value.map<
 		(typeof editedCards.value)[number]["card_attribute_value"][number]
@@ -376,25 +375,35 @@ function handleNewCardClick() {
 		};
 	});
 
-	editedCards.value.push({
+	const newCard = {
 		id: cardId,
 		created_at: "",
 		notes: "",
 		updated_at: "",
 		deck_id: deckId,
 		front_content: "",
-		display_order: editedCards.value.length,
+		display_order: 0,
 		card_attribute_value: cardAttributeValues,
-	});
+	};
 
-	// Select the new card immediately
+	editedCards.value.splice(insertAt, 0, newCard);
 	selectedCardId.value = cardId;
 
-	// Scroll the sidebar to bottom
 	nextTick(() => {
-		const sidebar = document.querySelector(".slides-sidebar");
-		if (sidebar) sidebar.scrollTop = sidebar.scrollHeight;
+		document
+			.querySelector(".slide-thumbnail.active")
+			?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 	});
+}
+
+// Footer button — always appends
+function handleNewCardClick() {
+	createCard(editedCards.value.length);
+}
+
+// Inline insert zone
+function handleInsertClick(index: number) {
+	createCard(index);
 }
 
 function handleSaveClick() {
@@ -452,40 +461,56 @@ function handleRemoveCardClick(cardId: number) {
 				</button>
 			</div>
 
-			<draggable
-				v-model="draggableList"
-				item-key="id"
-				handle=".drag-handle"
-				ghost-class="drag-ghost"
-				tag="div"
-				class="cards-list"
-			>
-				<template #item="{ element: card, index }">
-					<div
-						class="slide-thumbnail"
-						:class="{ active: selectedCardId === card.id }"
-						@click="selectedCardId = card.id"
-					>
-						<!-- Drag Handle -->
-						<div class="drag-handle">
-							<GripVerticalIcon :size="14" />
+			<div class="cards-list">
+				<draggable
+					v-model="draggableList"
+					item-key="id"
+					handle=".drag-handle"
+					ghost-class="drag-ghost"
+					tag="div"
+					class="draggable-inner"
+				>
+					<template #item="{ element: card, index }">
+						<div class="card-with-insert">
+							<div class="insert-zone" @click="handleInsertClick(index)">
+								<div class="insert-line" />
+								<button class="insert-btn" tabindex="-1">
+									<PlusIcon :size="12" />
+								</button>
+							</div>
+
+							<div
+								class="slide-thumbnail"
+								:class="{ active: selectedCardId === card.id }"
+								@click="selectedCardId = card.id"
+							>
+								<div class="drag-handle"><GripVerticalIcon :size="14" /></div>
+								<span class="slide-number">{{ index + 1 }}</span>
+								<div class="slide-preview">
+									<div class="preview-content">{{ card.front_content }}</div>
+								</div>
+								<button
+									class="delete-btn"
+									@click.stop="handleRemoveCardClick(card.id)"
+								>
+									<TrashIcon :size="16" />
+								</button>
+							</div>
 						</div>
+					</template>
+				</draggable>
 
-						<span class="slide-number">{{ index + 1 }}</span>
-
-						<div class="slide-preview">
-							<div class="preview-content">{{ card.front_content }}</div>
-						</div>
-
-						<button
-							class="delete-btn"
-							@click.stop="handleRemoveCardClick(card.id)"
-						>
-							<TrashIcon :size="16" />
-						</button>
-					</div>
-				</template>
-			</draggable>
+				<!-- trailing insert zone after the last card -->
+				<div
+					class="insert-zone"
+					@click="handleInsertClick(draggableList.length)"
+				>
+					<div class="insert-line" />
+					<button class="insert-btn" tabindex="-1">
+						<PlusIcon :size="12" />
+					</button>
+				</div>
+			</div>
 
 			<div class="sidebar-footer">
 				<button @click="handleNewCardClick" class="outline contrast full-width">
@@ -905,5 +930,63 @@ function handleRemoveCardClick(cardId: number) {
 		align-items: center;
 		justify-content: center;
 	}
+}
+
+.insert-zone {
+	height: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	cursor: pointer;
+	margin: 0 4px;
+}
+
+.insert-line {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 1.5px;
+	background: var(--pico-primary);
+	opacity: 0;
+	transition: opacity 0.15s;
+	border-radius: 1px;
+}
+
+.insert-btn {
+	position: absolute;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--pico-primary-background);
+	border: 1.5px solid var(--pico-primary);
+	color: var(--pico-primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	opacity: 0;
+	transition: opacity 0.15s;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.insert-zone:hover .insert-line,
+.insert-zone:hover .insert-btn {
+	opacity: 1;
+}
+
+.draggable-inner {
+	display: flex;
+	flex-direction: column;
+}
+
+.card-with-insert {
+	display: flex;
+	flex-direction: column;
+}
+
+.drag-ghost .insert-zone {
+	display: none;
 }
 </style>
