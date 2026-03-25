@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Database } from "@/database.types";
-import { notificationsStore } from "@/stores/notificationsStore";
+import { ref, onMounted } from "vue";
 import { supabase } from "@/utils/supabase";
-import { computed, onMounted, ref, useTemplateRef } from "vue";
+import { notificationsStore } from "@/stores/notificationsStore";
 
 type Settings = {
 	dark_mode: boolean;
@@ -12,159 +12,103 @@ const DEFAULT_SETTINGS: Settings = {
 	dark_mode: false,
 };
 
-const emit = defineEmits<{
-	(event: "close"): void;
-}>();
-
-const modalOverlay = useTemplateRef("modal-overlay");
+const emit = defineEmits<{ (e: "close"): void }>();
 
 const userPreferences = ref<
 	Database["public"]["Tables"]["user"]["Row"] | null
 >();
 
-const checkedNames = computed({
-	// derive the initial value from the supabase response
-	get() {
-		if (!userPreferences.value?.preferences) return [];
-
-		return Object.entries(userPreferences.value.preferences)
-			.filter(([_, value]) => value)
-			.map(([name]) => name);
-	},
-
-	// update when checkboxes change
-	set(checkedNames) {
-		if (!userPreferences.value) return;
-
-		const updatedPreferences = {
-			...(userPreferences.value.preferences as Record<string, boolean>),
-		};
-
-		Object.keys(updatedPreferences).forEach((key) => {
-			updatedPreferences[key] = false;
-		});
-
-		checkedNames.forEach((name) => {
-			updatedPreferences[name] = true;
-		});
-
-		userPreferences.value = {
-			...userPreferences.value,
-			preferences: updatedPreferences,
-		};
-	},
-});
+const loading = ref(true);
 
 function underscoreToDisplayName(str: string) {
-	return str
-		.split("_")
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(" ");
+	return str.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-function handleOverlayClick(event: Event) {
-	if (event.target === modalOverlay.value) {
-		emit("close");
-	}
+function getInputType(value: unknown): string {
+	if (typeof value === "boolean") return "checkbox";
+	if (typeof value === "number") return "number";
+	return "text";
 }
 
 async function handleSaveClick() {
 	if (userPreferences.value?.preferences) {
-		const response = await supabase
+		const { error } = await supabase
 			.from("user")
-			.update({
-				preferences: userPreferences.value.preferences,
-			})
-			.eq("id", userPreferences.value.id)
-			.select();
-		console.log("save preferences response", response);
-		notificationsStore.queueNotification({
-			message: "User settings updated",
-			type: "SUCCESS",
-		});
+			.update({ preferences: userPreferences.value.preferences })
+			.eq("id", userPreferences.value.id);
+
+		if (!error) {
+			notificationsStore.queueNotification({
+				message: "Settings saved",
+				type: "SUCCESS",
+			});
+			emit("close");
+		}
 	}
 }
 
-async function fetchPreferences(userId: string) {
-	return await supabase.from("user").select().eq("user_id", userId).single();
-}
-
 onMounted(async () => {
-	const user = await supabase.auth.getUser();
-	if (user.data.user?.id) {
-		const preferencesResponse = await fetchPreferences(user.data.user.id);
-		console.log("preferences", preferencesResponse.data);
-		if (preferencesResponse.data) {
-			userPreferences.value = preferencesResponse.data;
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (user) {
+		const { data } = await supabase
+			.from("user")
+			.select()
+			.eq("user_id", user.id)
+			.single();
+
+		if (data) {
+			userPreferences.value = data;
 		} else {
-			// if no settings exist, insert the default preferences for this user
-			const response = await supabase
+			const { data: inserted } = await supabase
 				.from("user")
-				.insert({
-					preferences: DEFAULT_SETTINGS,
-					user_id: user.data.user.id,
-				})
+				.insert({ preferences: DEFAULT_SETTINGS, user_id: user.id })
 				.select()
 				.single();
-			console.log("insert response", response);
-			userPreferences.value = response.data;
+			userPreferences.value = inserted;
 		}
+
+		loading.value = false;
 	}
 });
 </script>
 
 <template>
-	<div class="modal-overlay" ref="modal-overlay" @click="handleOverlayClick">
-		<div class="settings-modal">
-			<h1>Settings</h1>
-			<div
-				v-for="[name, value] in Object.entries(
-					userPreferences?.preferences ?? {},
-				)"
+	<BaseModal title="Settings" @close="emit('close')">
+		<div v-if="userPreferences">
+			<ModalRow
+				v-for="(value, name) in userPreferences.preferences"
 				:key="name"
+				:label="underscoreToDisplayName(name as string)"
+				description="Toggle this user preference"
 			>
 				<input
+					v-if="typeof value === 'boolean'"
 					type="checkbox"
-					:checked="value"
-					:value="name"
-					:id="`user-preference-${name}`"
-					v-model="checkedNames"
+					v-model="
+						(userPreferences.preferences as Record<string, unknown>)[
+							name as string
+						]
+					"
+					role="switch"
 				/>
-				<label :for="`user-preference-${name}`">{{
-					underscoreToDisplayName(name)
-				}}</label>
-			</div>
-			<button @click="handleSaveClick">Save</button>
+				<input
+					v-else
+					:type="getInputType(value)"
+					v-model="
+						(userPreferences.preferences as Record<string, unknown>)[
+							name as string
+						]
+					"
+				/>
+			</ModalRow>
 		</div>
-	</div>
+
+		<template #footer>
+			<button class="btn-base btn-cancel" @click="emit('close')">Cancel</button>
+			<button class="btn-base btn-apply" @click="handleSaveClick">Save</button>
+		</template>
+	</BaseModal>
 </template>
-
-<style scoped>
-.modal-overlay {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	z-index: 1000;
-	background-color: rgba(0, 0, 0, 0.2);
-
-	.settings-modal {
-		position: relative;
-		max-width: 400px;
-		width: 90%;
-		min-height: 200px;
-		z-index: 1001;
-		padding: 24px;
-		background-color: white;
-
-		h1,
-		label {
-			color: black;
-		}
-	}
-}
-</style>
